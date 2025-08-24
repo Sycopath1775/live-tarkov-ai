@@ -5,7 +5,13 @@
         "minBotsPerRaid": 6,
         "bossSpawnChance": 0.3,
         "raiderSpawnChance": 0.4,
-        "rogueSpawnChance": 0.25
+        "rogueSpawnChance": 0.25,
+        "bossExclusionZones": {
+            "enabled": true,
+            "minDistanceFromRegularSpawns": 100,
+            "excludeRegularScavsInBossZones": true,
+            "bossZoneRadius": 80
+        }
     },
     "mapSettings": {
         "default": {
@@ -142,8 +148,16 @@
                 "default": {
                     "enabled": true,
                     "priority": 1,
+                    "maxBots": 3,
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "bossZone": {
+                    "enabled": true,
+                    "priority": 2,
                     "maxBots": 4,
-                    "botTypes": ["assault", "pmcbear", "bossbully", "assaultgroup"]
+                    "botTypes": ["bossbully", "assaultgroup"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 100
                 }
             },
             "liveTarkovSettings": {
@@ -190,8 +204,16 @@
                 "default": {
                     "enabled": true,
                     "priority": 1,
-                    "maxBots": 4,
-                    "botTypes": ["assault", "pmcbear", "bosskilla"]
+                    "maxBots": 3,
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "bossZone": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 1,
+                    "botTypes": ["bosskilla"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 80
                 }
             },
             "liveTarkovSettings": {
@@ -244,8 +266,16 @@
                 "default": {
                     "enabled": true,
                     "priority": 1,
-                    "maxBots": 5,
-                    "botTypes": ["assault", "pmcbear", "bossgluhar", "assaultgroup"]
+                    "maxBots": 3,
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "bossZone": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 4,
+                    "botTypes": ["bossgluhar", "assaultgroup"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 120
                 }
             },
             "liveTarkovSettings": {
@@ -345,7 +375,15 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 3,
-                    "botTypes": ["assault", "pmcbear", "bossboar", "assaultgroup"]
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "bossZone": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 4,
+                    "botTypes": ["bossboar", "assaultgroup"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 100
                 }
             },
             "liveTarkovSettings": {
@@ -430,13 +468,21 @@
                 "default": {
                     "enabled": true,
                     "priority": 1,
-                    "maxBots": 5,
-                    "botTypes": ["assault", "pmcbear", "bosskaban"]
+                    "maxBots": 4,
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "bossZone": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 1,
+                    "botTypes": ["bosskaban"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 150
                 }
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 18,
+                "raidStartBots": 15,
                 "waveBots": 3,
                 "waveDelay": 300,
                 "maxWaves": 2,
