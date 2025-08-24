@@ -29,14 +29,14 @@ This mod brings authentic live Tarkov AI spawning and behavior to SPT, ensuring 
 
 ## 🗺️ Supported Maps
 
-- **Customs** - Scavs + PMCs + Rashala boss
+- **Customs** - Scavs + PMCs + Rashala boss + The Goons (Rogues)
 - **Interchange** - Scavs + PMCs + Killa boss  
-- **Shoreline** - Scavs + PMCs + Gluhar boss
-- **Woods** - Scavs + PMCs + Boar boss
+- **Shoreline** - Scavs + PMCs + Gluhar boss + The Goons (Rogues)
+- **Woods** - Scavs + PMCs + Boar boss + The Goons (Rogues)
 - **Reserve** - Scavs + PMCs + Raiders
 - **Streets** - Scavs + PMCs + Kaban boss
-- **Lighthouse** - Scavs + PMCs + Rogues
-- **Factory** - Scavs + PMCs only
+- **Lighthouse** - Scavs + PMCs + The Goons (Rogues)
+- **Factory** - Scavs + PMCs + Tagilla boss
 - **Labs** - PMCs + Raiders only
 
 ## 🚀 Installation

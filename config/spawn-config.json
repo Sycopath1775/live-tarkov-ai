@@ -68,6 +68,14 @@
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
+                },
+                "bosstagilla": {
+                    "enabled": true,
+                    "maxCount": 1,
+                    "spawnChance": 0.18,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -76,6 +84,12 @@
                     "priority": 1,
                     "maxBots": 2,
                     "botTypes": ["assault", "pmcbear"]
+                },
+                "boss": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 1,
+                    "botTypes": ["bosstagilla"]
                 }
             },
             "liveTarkovSettings": {
@@ -96,7 +110,6 @@
                 "assault": {
                     "enabled": true,
                     "maxCount": 15,
-                    "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -104,7 +117,6 @@
                 "pmcbear": {
                     "enabled": true,
                     "maxCount": 8,
-                    "spawnChance": 0.6,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
@@ -116,6 +128,14 @@
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
+                },
+                "assaultgroup": {
+                    "enabled": true,
+                    "maxCount": 3,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -123,7 +143,7 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 4,
-                    "botTypes": ["assault", "pmcbear", "bossbully"]
+                    "botTypes": ["assault", "pmcbear", "bossbully", "assaultgroup"]
                 }
             },
             "liveTarkovSettings": {
@@ -192,7 +212,6 @@
                 "assault": {
                     "enabled": true,
                     "maxCount": 18,
-                    "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -200,7 +219,6 @@
                 "pmcbear": {
                     "enabled": true,
                     "maxCount": 10,
-                    "spawnChance": 0.6,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
@@ -212,6 +230,14 @@
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
+                },
+                "assaultgroup": {
+                    "enabled": true,
+                    "maxCount": 3,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -219,7 +245,7 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 5,
-                    "botTypes": ["assault", "pmcbear", "bossgluhar"]
+                    "botTypes": ["assault", "pmcbear", "bossgluhar", "assaultgroup"]
                 }
             },
             "liveTarkovSettings": {
@@ -240,7 +266,6 @@
                 "assault": {
                     "enabled": true,
                     "maxCount": 16,
-                    "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -248,18 +273,17 @@
                 "pmcbear": {
                     "enabled": true,
                     "maxCount": 8,
-                    "spawnChance": 0.6,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
                 },
                 "assaultgroup": {
                     "enabled": true,
-                    "maxCount": 4,
-                    "spawnChance": 0.4,
-                    "gearTier": 3,
-                    "difficulty": "hard",
-                    "spawnTiming": "wave"
+                    "maxCount": 3,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -288,7 +312,6 @@
                 "assault": {
                     "enabled": true,
                     "maxCount": 12,
-                    "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -296,7 +319,6 @@
                 "pmcbear": {
                     "enabled": true,
                     "maxCount": 6,
-                    "spawnChance": 0.6,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
@@ -308,6 +330,14 @@
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
+                },
+                "assaultgroup": {
+                    "enabled": true,
+                    "maxCount": 3,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -315,7 +345,7 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 3,
-                    "botTypes": ["assault", "pmcbear", "bossboar"]
+                    "botTypes": ["assault", "pmcbear", "bossboar", "assaultgroup"]
                 }
             },
             "liveTarkovSettings": {
@@ -336,7 +366,6 @@
                 "assault": {
                     "enabled": true,
                     "maxCount": 18,
-                    "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -344,18 +373,9 @@
                 "pmcbear": {
                     "enabled": true,
                     "maxCount": 10,
-                    "spawnChance": 0.6,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
-                },
-                "assaultgroup": {
-                    "enabled": true,
-                    "maxCount": 4,
-                    "spawnChance": 0.4,
-                    "gearTier": 3,
-                    "difficulty": "hard",
-                    "spawnTiming": "wave"
                 }
             },
             "spawnPoints": {
@@ -363,7 +383,7 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 5,
-                    "botTypes": ["assault", "pmcbear", "assaultgroup"]
+                    "botTypes": ["assault", "pmcbear"]
                 }
             },
             "liveTarkovSettings": {
@@ -586,24 +606,44 @@
                 "vision": 1.0
             }
         },
-        "assaultgroup": {
+        "bosstagilla": {
             "enabled": true,
-            "gearTier": 3,
-            "difficulty": "hard",
-            "spawnChance": 0.4,
-            "maxCount": 3,
-            "allowedMaps": ["lighthouse", "reserve"],
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.18,
+            "maxCount": 1,
+            "allowedMaps": ["factory4_day"],
             "gearRestrictions": {
                 "weapons": [],
                 "armor": [],
                 "items": []
             },
             "liveTarkovBehavior": {
-                "accuracy": 0.85,
-                "reactionTime": 0.6,
-                "aggression": 0.95,
-                "hearing": 0.95,
-                "vision": 0.95
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
+            }
+        },
+        "assaultgroup": {
+            "enabled": true,
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.15,
+            "maxCount": 3,
+            "allowedMaps": ["bigmap", "woods", "lighthouse", "shoreline"],
+            "gearRestrictions": {
+                "weapons": [],
+                "armor": [],
+                "items": []
+            },
+            "liveTarkovBehavior": {
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
             }
         }
     },

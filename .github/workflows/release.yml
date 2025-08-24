@@ -29,7 +29,9 @@ jobs:
     - name: Upload release assets
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`n      with:
-        upload_url: ${{ github.event.release.upload_url }}`n        asset_path: ./Live Tarkov - AI-v*.zip
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./Live Tarkov - AI-v*.zip
         asset_name: Live Tarkov - AI Release Package
         asset_content_type: application/zip
