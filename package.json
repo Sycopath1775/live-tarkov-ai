@@ -1,0 +1,49 @@
+{
+  "name": "Live Tarkov - AI",
+  "version": "1.0.0",
+  "description": "Authentic live Tarkov AI spawning and behavior mod for SPT. Features realistic bot distribution, boss spawns, gear progression, and seamless integration with SAIN, Fika, BigBrain, and Waypoints.",
+  "main": "src/mod.js",
+  "scripts": {
+    "build": "node ./build.mjs",
+    "build:ps1": "powershell -ExecutionPolicy Bypass -File ./build.ps1",
+    "build:bat": "cmd /c build.bat",
+    "release": "powershell -ExecutionPolicy Bypass -File ./build-release.ps1",
+    "release:bat": "cmd /c build-release.bat"
+  },
+  "keywords": [
+    "spt",
+    "tarkov",
+    "ai",
+    "bots",
+    "spawning",
+    "live-tarkov",
+    "bosses",
+    "gear-progression",
+    "sain",
+    "fika",
+    "bigbrain",
+    "waypoints"
+  ],
+  "author": "Sycopath",
+  "license": "MIT",
+  "sptVersion": "~3.11",
+  "loadBefore": [],
+  "loadAfter": [],
+  "incompatibilities": [],
+  "isBundleMod": false,
+  "dependencies": {
+    "semver": "^7.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.8",
+    "@types/node": "^20.8.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sycopath/live-tarkov-ai"
+  },
+  "bugs": {
+    "url": "https://github.com/Sycopath/live-tarkov-ai/issues"
+  },
+  "homepage": "https://github.com/Sycopath/live-tarkov-ai#readme"
+}

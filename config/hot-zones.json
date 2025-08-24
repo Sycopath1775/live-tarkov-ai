@@ -1,0 +1,882 @@
+{
+    "enabled": true,
+    "hotZones": {
+        "bigmap": {
+            "enabled": true,
+            "zones": {
+                "ZoneOldAZS": {
+                    "enabled": true,
+                    "description": "Old Gas Station - Scav quest location",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 3,
+                    "spawnChance": 0.8,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.2,
+                        "y": 0.3,
+                        "radius": 40
+                    },
+                    "questRelated": true,
+                    "questName": "Kill scavs at Old Gas",
+                    "questZones": ["beacon_zone_fuel3"]
+                },
+                "ZoneGasStation": {
+                    "enabled": true,
+                    "description": "New Gas Station - Scav quest location",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 3,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.8,
+                        "y": 0.7,
+                        "radius": 40
+                    },
+                    "questRelated": true,
+                    "questName": "Kill scavs at New Gas",
+                    "questZones": ["beacon_zone_fuel1"]
+                },
+                "ZoneDormitory": {
+                    "enabled": true,
+                    "description": "Dorms - PMC hotspot, shotgun quest location",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.4,
+                        "radius": 50
+                    },
+                    "questRelated": true,
+                    "questName": "Kill PMCs with shotgun",
+                    "questZones": ["expl_zone_room214", "expl_zone_room206_water", "expl_zone_room114"]
+                },
+                "ZoneGoons": {
+                    "enabled": true,
+                    "description": "The Goons spawn area - Rogue squad only",
+                    "spawnTypes": ["rogue"],
+                    "maxBots": 3,
+                    "spawnChance": 0.15,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 60
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "rogueOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                },
+                "ZoneFactoryCenter": {
+                    "enabled": true,
+                    "description": "Factory Center - PMC and Scav mix",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.6,
+                        "radius": 45
+                    },
+                    "questRelated": false
+                },
+                "ZoneCrossRoad": {
+                    "enabled": true,
+                    "description": "Crossroads - High traffic area",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.5,
+                    "spawnTiming": "start",
+                    "priority": "low",
+                    "coordinates": {
+                        "x": 0.4,
+                        "y": 0.5,
+                        "radius": 35
+                    },
+                    "questRelated": true,
+                    "questZones": ["beacon_zone_fuel4"]
+                },
+                "ZoneBrige": {
+                    "enabled": true,
+                    "description": "Bridge - PMC crossing point",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 1,
+                    "spawnChance": 0.4,
+                    "spawnTiming": "start",
+                    "priority": "low",
+                    "coordinates": {
+                        "x": 0.6,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": false
+                },
+                "ZoneTankSquare": {
+                    "enabled": true,
+                    "description": "Tank Square - High value area",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.7,
+                        "y": 0.2,
+                        "radius": 40
+                    },
+                    "questRelated": false
+                },
+                "ZoneCustoms": {
+                    "enabled": true,
+                    "description": "Customs checkpoint area",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 2,
+                    "spawnChance": 0.5,
+                    "spawnTiming": "start",
+                    "priority": "low",
+                    "coordinates": {
+                        "x": 0.1,
+                        "y": 0.8,
+                        "radius": 35
+                    },
+                    "questRelated": false
+                }
+            }
+        },
+        "factory4_day": {
+            "enabled": true,
+            "zones": {
+                "BotZone": {
+                    "enabled": true,
+                    "description": "Factory main area",
+                    "spawnTypes": ["assault", "marksman", "pmcbear", "pmcusec"],
+                    "maxBots": 4,
+                    "spawnChance": 0.9,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_SADOVOD_01_1", "place_SADOVOD_01_2", "case_extraction_zone"]
+                }
+            }
+        },
+        "factory4_night": {
+            "enabled": true,
+            "zones": {
+                "BotZone": {
+                    "enabled": true,
+                    "description": "Factory main area (night)",
+                    "spawnTypes": ["assault", "marksman", "pmcbear", "pmcusec"],
+                    "maxBots": 3,
+                    "spawnChance": 0.8,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": true,
+                    "questZones": ["ter_017_area_1"]
+                }
+            }
+        },
+        "interchange": {
+            "enabled": true,
+            "zones": {
+                "ZoneHighway": {
+                    "enabled": true,
+                    "description": "Highway - Scav spawn area (no PMCs)",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 4,
+                    "spawnChance": 0.8,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.1,
+                        "radius": 80
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "pmcAllowed": false,
+                        "scavOnly": true,
+                        "minDistanceFromMall": 100
+                    }
+                },
+                "ZoneOutsideMall": {
+                    "enabled": true,
+                    "description": "Outside Mall - PMC spawn area (no scavs)",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 4,
+                    "spawnChance": 0.9,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.9,
+                        "radius": 70
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "pmcOnly": true,
+                        "scavAllowed": false,
+                        "minDistanceFromHighway": 150
+                    }
+                },
+                "ZoneCenter": {
+                    "enabled": true,
+                    "description": "Interchange center - Mixed spawns, reduced scav dominance",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 2,
+                    "spawnChance": 0.3,
+                    "spawnTiming": "start",
+                    "priority": "low",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_keeper6_kiba_kill"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 1,
+                        "maxScavs": 1
+                    }
+                },
+                "ZoneOLI": {
+                    "enabled": true,
+                    "description": "OLI - PMC and scav mix, increased PMC chance",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 2,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.5,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_merch_022_2"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 1,
+                        "maxScavs": 1
+                    }
+                },
+                "ZoneIDEA": {
+                    "enabled": true,
+                    "description": "IDEA - PMC and scav mix, increased PMC chance",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 2,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.7,
+                        "y": 0.5,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_merch_022_1"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 1,
+                        "maxScavs": 1
+                    }
+                },
+                "ZoneGoshan": {
+                    "enabled": true,
+                    "description": "Goshan - Scav hotspot, reduced dominance",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 2,
+                    "spawnChance": 0.5,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.3,
+                        "radius": 40
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_merch_022_6"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": false,
+                        "scavOnly": true,
+                        "maxScavs": 2
+                    }
+                },
+                "ZonePowerStation": {
+                    "enabled": true,
+                    "description": "Power Station - Scav spawn, reduced dominance",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 1,
+                    "spawnChance": 0.4,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.2,
+                        "y": 0.8,
+                        "radius": 35
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_WARBLOOD_04_3"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": false,
+                        "scavOnly": true,
+                        "maxScavs": 1
+                    }
+                },
+                "ZoneKilla": {
+                    "enabled": true,
+                    "description": "Killa spawn area - Boss only, proper gear",
+                    "spawnTypes": ["bosskilla"],
+                    "maxBots": 1,
+                    "spawnChance": 0.4,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 25
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "bossOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                }
+            }
+        },
+        "laboratory": {
+            "enabled": true,
+            "zones": {
+                "BotZoneMain": {
+                    "enabled": true,
+                    "description": "Labs main area - Raider spawn",
+                    "spawnTypes": ["assaultgroup"],
+                    "maxBots": 4,
+                    "spawnChance": 0.9,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 50
+                    },
+                    "questRelated": true,
+                    "questZones": ["peace_027_area", "quest_zone_keeper7_saferoom"]
+                }
+            }
+        },
+        "rezervbase": {
+            "enabled": true,
+            "zones": {
+                "ZoneRailStrorage": {
+                    "enabled": true,
+                    "description": "Rail Storage - High value area",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 3,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.4,
+                        "radius": 50
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_keeper3_hide"]
+                },
+                "ZoneBarrack": {
+                    "enabled": true,
+                    "description": "Barracks - PMC hotspot",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.6,
+                        "y": 0.6,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["prapor_024_area_1", "prapor_024_area_2"]
+                },
+                "ZoneBunkerStorage": {
+                    "enabled": true,
+                    "description": "Bunker Storage - High value area",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.4,
+                        "y": 0.5,
+                        "radius": 40
+                    },
+                    "questRelated": false
+                }
+            }
+        },
+        "shoreline": {
+            "enabled": true,
+            "zones": {
+                "ZoneResort": {
+                    "enabled": true,
+                    "description": "Resort - Sanitar spawn area, high value loot",
+                    "spawnTypes": ["bosssanitar", "assault", "marksman"],
+                    "maxBots": 4,
+                    "spawnChance": 0.8,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 60
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_resort_west", "place_resort_east"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "bossAllowed": true,
+                        "maxPmcs": 2,
+                        "maxScavs": 2,
+                        "maxBosses": 1
+                    }
+                },
+                "ZonePier": {
+                    "enabled": true,
+                    "description": "Pier - Scav and PMC mix",
+                    "spawnTypes": ["assault", "pmcbear", "pmcusec"],
+                    "maxBots": 3,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.8,
+                        "y": 0.3,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_pier"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 1,
+                        "maxScavs": 2
+                    }
+                },
+                "ZoneGasStation": {
+                    "enabled": true,
+                    "description": "Gas Station - Scav hotspot",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 3,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.2,
+                        "y": 0.7,
+                        "radius": 40
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_gas_station"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": false,
+                        "scavOnly": true,
+                        "maxScavs": 3
+                    }
+                },
+                "ZoneVillage": {
+                    "enabled": true,
+                    "description": "Village - PMC and scav mix",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 3,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.2,
+                        "radius": 50
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_village"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 1,
+                        "maxScavs": 2
+                    }
+                },
+                "ZoneSanitar": {
+                    "enabled": true,
+                    "description": "Sanitar spawn area - Boss only, proper gear",
+                    "spawnTypes": ["bosssanitar"],
+                    "maxBots": 1,
+                    "spawnChance": 0.3,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "bossOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                },
+                "ZoneGoons": {
+                    "enabled": true,
+                    "description": "The Goons spawn area - Rogue squad only",
+                    "spawnTypes": ["rogue"],
+                    "maxBots": 3,
+                    "spawnChance": 0.15,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 50
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "rogueOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                }
+            }
+        },
+        "woods": {
+            "enabled": true,
+            "zones": {
+                "ZoneWoodCutter": {
+                    "enabled": true,
+                    "description": "Wood Cutter - Scav spawn",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.3,
+                        "radius": 35
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_peacemaker_007_2_N2"]
+                },
+                "ZoneRedHouse": {
+                    "enabled": true,
+                    "description": "Red House - Scav spawn",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.7,
+                        "y": 0.7,
+                        "radius": 40
+                    },
+                    "questRelated": false
+                },
+                "ZoneHighRocks": {
+                    "enabled": true,
+                    "description": "High Rocks - PMC spawn",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 1,
+                    "spawnChance": 0.4,
+                    "spawnTiming": "start",
+                    "priority": "low",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.2,
+                        "radius": 35
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_keeper5"]
+                },
+                "ZoneMiniHouse": {
+                    "enabled": true,
+                    "description": "Mini House - Scav spawn",
+                    "spawnTypes": ["assault", "marksman"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.2,
+                        "y": 0.5,
+                        "radius": 30
+                    },
+                    "questRelated": false
+                },
+                "ZoneGoons": {
+                    "enabled": true,
+                    "description": "The Goons spawn area - Rogue squad only",
+                    "spawnTypes": ["rogue"],
+                    "maxBots": 3,
+                    "spawnChance": 0.15,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 50
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "rogueOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                }
+            }
+        },
+        "lighthouse": {
+            "enabled": true,
+            "zones": {
+                "ZoneLighthouse": {
+                    "enabled": true,
+                    "description": "Lighthouse - High value loot area",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 4,
+                    "spawnChance": 0.8,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 60
+                    },
+                    "questRelated": true,
+                    "questZones": ["place_lighthouse"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 2,
+                        "maxScavs": 2
+                    }
+                },
+                "ZoneGoons": {
+                    "enabled": true,
+                    "description": "The Goons spawn area - Rogue squad only",
+                    "spawnTypes": ["rogue"],
+                    "maxBots": 3,
+                    "spawnChance": 0.15,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 50
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "rogueOnly": true,
+                        "noOtherBots": true,
+                        "liveTarkovRate": true,
+                        "properGear": true
+                    }
+                }
+            }
+        },
+        "tarkovstreets": {
+            "enabled": true,
+            "zones": {
+                "ZoneCarShowroom": {
+                    "enabled": true,
+                    "description": "Car Showroom - High value area",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 3,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.3,
+                        "y": 0.4,
+                        "radius": 50
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_place_c14_revx_2"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 2,
+                        "maxScavs": 1,
+                        "pmcBalance": {
+                            "usecRatio": 0.5,
+                            "bearRatio": 0.5
+                        }
+                    }
+                },
+                "ZoneCinema": {
+                    "enabled": true,
+                    "description": "Cinema - PMC hotspot",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.6,
+                        "y": 0.5,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_kill_cinema"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": false,
+                        "maxPmcs": 2,
+                        "pmcBalance": {
+                            "usecRatio": 0.5,
+                            "bearRatio": 0.5
+                        }
+                    }
+                },
+                "ZoneConcordia_1": {
+                    "enabled": true,
+                    "description": "Concordia Building 1 - High value area",
+                    "spawnTypes": ["pmcbear", "pmcusec", "assault"],
+                    "maxBots": 3,
+                    "spawnChance": 0.7,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.6,
+                        "radius": 55
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_keeper8_1"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": true,
+                        "maxPmcs": 2,
+                        "maxScavs": 1,
+                        "pmcBalance": {
+                            "usecRatio": 0.5,
+                            "bearRatio": 0.5
+                        }
+                    }
+                },
+                "ZoneHotel_1": {
+                    "enabled": true,
+                    "description": "Hotel Building 1 - PMC hotspot",
+                    "spawnTypes": ["pmcbear", "pmcusec"],
+                    "maxBots": 2,
+                    "spawnChance": 0.6,
+                    "spawnTiming": "start",
+                    "priority": "medium",
+                    "coordinates": {
+                        "x": 0.4,
+                        "y": 0.3,
+                        "radius": 45
+                    },
+                    "questRelated": true,
+                    "questZones": ["quest_zone_c21_look", "quest_zone_c29_debt"],
+                    "spawnRestrictions": {
+                        "pmcAllowed": true,
+                        "scavAllowed": false,
+                        "maxPmcs": 2,
+                        "pmcBalance": {
+                            "usecRatio": 0.5,
+                            "bearRatio": 0.5
+                        }
+                    }
+                },
+                "ZoneLexos": {
+                    "enabled": true,
+                    "description": "Lexos - Kaban and guards spawn area, restricted to zone",
+                    "spawnTypes": ["bosskaban", "assault"],
+                    "maxBots": 4,
+                    "spawnChance": 0.4,
+                    "spawnTiming": "start",
+                    "priority": "high",
+                    "coordinates": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "radius": 60
+                    },
+                    "questRelated": false,
+                    "spawnRestrictions": {
+                        "bossAllowed": true,
+                        "scavAllowed": true,
+                        "maxBosses": 1,
+                        "maxScavs": 3,
+                        "zoneRestriction": {
+                            "enabled": true,
+                            "restrictToZone": true,
+                            "zoneName": "ZoneLexos",
+                            "maxDistanceFromCenter": 80,
+                            "preventRoaming": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "questZones": {
+        "enabled": true,
+        "questBasedSpawning": true,
+        "questZoneMultiplier": 1.5,
+        "questZonePriority": "high",
+        "questZoneTiming": "start"
+    },
+    "spawnDistribution": {
+        "enabled": true,
+        "minDistanceBetweenSpawns": 150,
+        "maxSpawnsPerZone": 2,
+        "zonePriority": {
+            "high": 1,
+            "medium": 2,
+            "low": 3
+        },
+        "spawnTiming": {
+            "initialSpawnDelay": 45,
+            "waveSpacing": 300,
+            "randomization": 90
+        }
+    },
+    "integration": {
+        "waypointsMod": true,
+        "bigBrainMod": true,
+        "useExistingPathfinding": true,
+        "preventStuckBots": true
+    }
+}
