@@ -1,8 +1,6 @@
 import { build } from "esbuild";
-import { createWriteStream } from "fs";
 import { promises as fs } from "fs";
 import { join, dirname } from "path";
-import archiver from "archiver";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,13 +42,9 @@ async function buildMod() {
             join(__dirname, "src/package.json")
         );
 
-        // Create mod package
-        await createModPackage();
-
         console.log("✓ Build completed successfully!");
         console.log("✓ mod.js integrity maintained for SPT compatibility");
         console.log("✓ All TypeScript files compiled");
-        console.log("✓ Mod package created");
         
     } catch (error) {
         console.error("Build failed:", error);
@@ -101,76 +95,24 @@ const mod = {
                 this.configManager.getSainIntegrationConfig()
             );
             
-            console.log("[Live Tarkov - AI] All managers and services initialized");
-            console.log("[Live Tarkov - AI] Pre-SPT load completed");
+            console.log("[Live Tarkov - AI] All managers initialized");
         } catch (error) {
-            console.error("[Live Tarkov - AI] Error in pre-SPT load:", error);
+            console.error("[Live Tarkov - AI] Error initializing managers:", error);
         }
     },
 
     // IPostDBLoadMod interface
-    postDBLoad: function() {
+    postDBLoad: function(database) {
         try {
             console.log("[Live Tarkov - AI] Post-DB load phase...");
             
-            // Get required services directly from SPT (no tsyringe dependency)
-            let DatabaseServer, ConfigServer;
-            
-            try {
-                // Try to get services from SPT environment
-                DatabaseServer = require("@spt/servers/DatabaseServer").DatabaseServer;
-                ConfigServer = require("@spt/servers/ConfigServer").ConfigServer;
-            } catch (error) {
-                console.log("[Live Tarkov - AI] SPT services not available yet, continuing...");
-                // Continue without services - they'll be available later
-            }
-            
-            // Initialize spawn manager if DatabaseServer is available
-            if (DatabaseServer && this.spawnManager) {
-                try {
-                    this.spawnManager.initialize(DatabaseServer);
-                    
-                    // Configure spawn data
-                    console.log("[Live Tarkov - AI] Configuring spawn data...");
-                    this.spawnManager.applyCustomSpawnConfig();
-                } catch (error) {
-                    console.error("[Live Tarkov - AI] Error configuring spawn data:", error);
-                }
-            }
-            
             // Initialize integration services
-            this.initializeIntegrationServices();
-            
-            // Hook into raid time adjustment service for spawn modifications
-            this.hookIntoRaidServices();
-            
-            // Investigate Fika item desync if Fika is active
             if (this.fikaIntegrationService) {
                 try {
-                    this.fikaIntegrationService.investigateItemDesync();
+                    this.fikaIntegrationService.initialize(database);
+                    console.log("[Live Tarkov - AI] Fika integration service initialized");
                 } catch (error) {
-                    console.error("[Live Tarkov - AI] Error investigating Fika item desync:", error);
-                }
-            }
-            
-            console.log("[Live Tarkov - AI] Spawn data configuration completed!");
-        } catch (error) {
-            console.error("[Live Tarkov - AI] Error in post-DB load:", error);
-        }
-    },
-
-    // Initialize integration services
-    initializeIntegrationServices: function() {
-        try {
-            console.log("[Live Tarkov - AI] Initializing integration services...");
-            
-            // Initialize Fika integration
-            if (this.fikaIntegrationService) {
-                try {
-                    console.log("[Live Tarkov - AI] Fika integration service status:", 
-                        this.fikaIntegrationService.getIntegrationStatus());
-                } catch (error) {
-                    console.error("[Live Tarkov - AI] Error getting Fika integration status:", error);
+                    console.error("[Live Tarkov - AI] Error initializing Fika integration:", error);
                 }
             }
             
@@ -218,55 +160,6 @@ exports.mod = mod;
 
     await fs.writeFile(join(__dirname, "src/mod.js"), modJsContent);
     console.log("✓ mod.js recreated with correct SPT exports (no tsyringe dependency)");
-}
-
-async function createModPackage() {
-    return new Promise((resolve, reject) => {
-        const output = createWriteStream(join(__dirname, "live-tarkov-ai.zip"));
-        const archive = archiver("zip", { zlib: { level: 9 } });
-
-        output.on("close", () => {
-            console.log("✓ Mod package created successfully");
-            resolve();
-        });
-
-        archive.on("error", (err) => {
-            reject(err);
-        });
-
-        archive.pipe(output);
-
-        // Add source files
-        archive.directory(join(__dirname, "src"), "src");
-        
-        // Add config directory if it exists
-        try {
-            if (fs.stat(join(__dirname, "config"))) {
-                archive.directory(join(__dirname, "config"), "config");
-            }
-        } catch (error) {
-            // Config directory doesn't exist, skip
-        }
-
-        // Add README and LICENSE if they exist
-        try {
-            if (fs.stat(join(__dirname, "README.md"))) {
-                archive.file(join(__dirname, "README.md"), { name: "README.md" });
-            }
-        } catch (error) {
-            // README doesn't exist, skip
-        }
-
-        try {
-            if (fs.stat(join(__dirname, "LICENSE"))) {
-                archive.file(join(__dirname, "LICENSE"), { name: "LICENSE" });
-            }
-        } catch (error) {
-            // LICENSE doesn't exist, skip
-        }
-
-        archive.finalize();
-    });
 }
 
 // Run build
