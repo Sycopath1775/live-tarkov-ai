@@ -2,53 +2,52 @@
 
 **Making SPT feel like the real thing!** 🎯
 
-This mod brings authentic live Tarkov AI spawning and behavior to SPT, ensuring your raids feel exactly like the live game.
+Authentic live Tarkov AI spawning and behavior mod for SPT, ensuring your raids feel exactly like the live game.
 
-## ✨ Key Features
+## ✨ Features
 
-- **Authentic Spawn Distribution**: Bots spawn in realistic locations with proper timing, just like live Tarkov
-- **Live Boss Spawns**: All bosses spawn with accurate chances and locations (Rashala on Customs, Killa on Interchange, etc.)
-- **Realistic Gear Progression**: PMCs get appropriate gear based on their level and difficulty
-- **Wave System**: Dynamic scav waves that scale with player count and raid progress
+- **Authentic Spawn Distribution**: Bots spawn in realistic locations with proper timing
+- **Live Boss Spawns**: All bosses with accurate chances and locations
+- **Realistic Gear Progression**: PMCs get appropriate gear based on level
+- **Dynamic Wave System**: Scav waves that scale with player count
 - **Hot Zones**: Bots concentrate in quest-related and high-traffic areas
-- **Map-Specific Logic**: Each map has unique spawn patterns matching live Tarkov
+- **Map-Specific Logic**: Unique spawn patterns for each map
 
 ## 🔧 Required Mods
 
-- **DrakiaXYZ-Waypoints** - Essential for bot pathfinding and navigation (BepInEx plugin)
-- **DrakiaXYZ-BigBrain** - Required for enhanced AI decision making and behavior (BepInEx plugin)
-
-**Note**: These are BepInEx plugins that must be installed in the `BepInEx/plugins/` folder, not SPT mods.
+**BepInEx Plugins (install in `BepInEx/plugins/`):**
+- **DrakiaXYZ-Waypoints** - Essential for bot pathfinding
+- **DrakiaXYZ-BigBrain** - Required for enhanced AI behavior
 
 ## 🎯 Recommended Mods
 
 - **SAIN** - Enhanced AI behavior and bot intelligence
 - **Fika** - Multiplayer compatibility and player scav handling
-- **BigBrain** - Advanced AI decision making and pathfinding
-- **Waypoints** - Improved bot navigation and movement
 
 ## 🗺️ Supported Maps
 
-- **Customs** - Scavs + PMCs + Rashala boss + The Goons (Rogues)
-- **Interchange** - Scavs + PMCs + Killa boss  
-- **Shoreline** - Scavs + PMCs + Gluhar boss + The Goons (Rogues)
-- **Woods** - Scavs + PMCs + Boar boss + The Goons (Rogues)
-- **Reserve** - Scavs + PMCs + Raiders
-- **Streets** - Scavs + PMCs + Kaban boss
-- **Lighthouse** - Scavs + PMCs + The Goons (Rogues)
-- **Factory** - Scavs + PMCs + Tagilla boss
-- **Labs** - PMCs + Raiders only
+| Map | Bosses | Special Features |
+|-----|--------|------------------|
+| **Customs** | Rashala + The Goons | PMC spawns, hot zones |
+| **Interchange** | Killa | PMC spawns, hot zones |
+| **Shoreline** | Gluhar + The Goons | PMC spawns, hot zones |
+| **Woods** | Boar + The Goons | PMC spawns, hot zones |
+| **Reserve** | Raiders | PMC spawns, hot zones |
+| **Streets** | Kaban | PMC spawns, hot zones |
+| **Lighthouse** | The Goons | PMC spawns, hot zones |
+| **Factory** | Tagilla | PMC spawns, hot zones |
+| **Labs** | PMCs + Raiders only | No scavs |
 
 ## 🚀 Installation
 
 1. Download and extract to `user/mods/`
-2. Ensure the folder is named `Live Tarkov - AI`
+2. Ensure folder is named `Live Tarkov - AI`
 3. Restart SPT
 4. Check server logs for successful initialization
 
 ## ⚙️ Configuration
 
-The mod includes a comprehensive `spawn-config.json` file where you can customize:
+Customize `config/spawn-config.json`:
 - Bot counts and spawn rates
 - Boss spawn chances
 - Gear tier restrictions
@@ -58,23 +57,16 @@ The mod includes a comprehensive `spawn-config.json` file where you can customiz
 ## 🎮 Compatibility
 
 - **SPT Version**: 3.11+
-- **Required**: DrakiaXYZ-Waypoints and DrakiaXYZ-BigBrain (BepInEx plugins)
+- **Performance**: Optimized for minimal server impact
 - **Other Mods**: Fully compatible with most SPT mods
-- **Performance**: Optimized for minimal impact on server performance
 
 ## 📝 Changelog
 
-**v1.0.0**
-- Initial release with live Tarkov authenticity
-- Complete boss spawn system
-- Realistic gear progression
-- Dynamic wave spawning
-- Hot zone implementation
-- Full SAIN, Fika, BigBrain, and Waypoints integration
+**v1.0.0** - Initial release with live Tarkov authenticity, complete boss spawn system, realistic gear progression, dynamic wave spawning, and full SAIN/Fika integration.
 
 ## 🤝 Support
 
-For issues, questions, or feature requests, please check the mod's GitHub page or SPT Discord.
+For issues or questions, check the [GitHub repository](https://github.com/Sycopath1775/live-tarkov-ai) or SPT Discord.
 
 ---
 
