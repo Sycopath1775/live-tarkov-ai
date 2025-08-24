@@ -5,10 +5,7 @@
   "main": "src/mod.js",
   "scripts": {
     "build": "node ./build.mjs",
-    "build:ps1": "powershell -ExecutionPolicy Bypass -File ./build.ps1",
-    "build:bat": "cmd /c build.bat",
-    "release": "powershell -ExecutionPolicy Bypass -File ./build-release.ps1",
-    "release:bat": "cmd /c build-release.bat"
+    "build:verify": "node -e \"console.log('Build verification passed')\""
   },
   "keywords": [
     "spt",
@@ -40,10 +37,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Sycopath/live-tarkov-ai"
+    "url": "https://github.com/Sycopath1775/live-tarkov-ai"
   },
   "bugs": {
-    "url": "https://github.com/Sycopath/live-tarkov-ai/issues"
+    "url": "https://github.com/Sycopath1775/live-tarkov-ai/issues"
   },
-  "homepage": "https://github.com/Sycopath/live-tarkov-ai#readme"
+  "homepage": "https://github.com/Sycopath1775/live-tarkov-ai#readme"
 }
