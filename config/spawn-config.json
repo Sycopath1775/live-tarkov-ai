@@ -1,8 +1,8 @@
 {
     "enabled": true,
     "globalSettings": {
-        "maxBotsPerRaid": 20,
-        "minBotsPerRaid": 8,
+        "maxBotsPerRaid": 15,
+        "minBotsPerRaid": 6,
         "bossSpawnChance": 0.3,
         "raiderSpawnChance": 0.4,
         "rogueSpawnChance": 0.25
@@ -104,12 +104,12 @@
         },
         "bigmap": {
             "enabled": true,
-            "maxBots": 25,
-            "minBots": 10,
+            "maxBots": 12,
+            "minBots": 6,
             "botTypes": {
                 "assault": {
                     "enabled": true,
-                    "maxCount": 15,
+                    "maxCount": 8,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -148,22 +148,22 @@
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 15,
-                "waveBots": 4,
+                "raidStartBots": 8,
+                "waveBots": 2,
                 "waveDelay": 300,
-                "maxWaves": 3,
+                "maxWaves": 2,
                 "scavBehavior": "mixed",
                 "pmcBehavior": "tactical"
             }
         },
         "interchange": {
             "enabled": true,
-            "maxBots": 28,
-            "minBots": 12,
+            "maxBots": 16,
+            "minBots": 8,
             "botTypes": {
                 "assault": {
                     "enabled": true,
-                    "maxCount": 16,
+                    "maxCount": 10,
                     "spawnChance": 0.8,
                     "gearTier": 1,
                     "difficulty": "normal",
@@ -206,12 +206,12 @@
         },
         "shoreline": {
             "enabled": true,
-            "maxBots": 30,
-            "minBots": 12,
+            "maxBots": 18,
+            "minBots": 8,
             "botTypes": {
                 "assault": {
                     "enabled": true,
-                    "maxCount": 18,
+                    "maxCount": 12,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -250,22 +250,22 @@
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 20,
-                "waveBots": 5,
+                "raidStartBots": 12,
+                "waveBots": 3,
                 "waveDelay": 360,
-                "maxWaves": 3,
+                "maxWaves": 2,
                 "scavBehavior": "mixed",
                 "pmcBehavior": "tactical"
             }
         },
         "lighthouse": {
             "enabled": true,
-            "maxBots": 28,
-            "minBots": 10,
+            "maxBots": 16,
+            "minBots": 8,
             "botTypes": {
                 "assault": {
                     "enabled": true,
-                    "maxCount": 16,
+                    "maxCount": 10,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
@@ -306,8 +306,8 @@
         },
         "woods": {
             "enabled": true,
-            "maxBots": 22,
-            "minBots": 8,
+            "maxBots": 16,
+            "minBots": 6,
             "botTypes": {
                 "assault": {
                     "enabled": true,
@@ -360,8 +360,8 @@
         },
         "reserve": {
             "enabled": true,
-            "maxBots": 32,
-            "minBots": 15,
+            "maxBots": 20,
+            "minBots": 10,
             "botTypes": {
                 "assault": {
                     "enabled": true,
@@ -388,18 +388,18 @@
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 22,
-                "waveBots": 5,
+                "raidStartBots": 15,
+                "waveBots": 3,
                 "waveDelay": 300,
-                "maxWaves": 3,
+                "maxWaves": 2,
                 "scavBehavior": "mixed",
                 "pmcBehavior": "tactical"
             }
         },
         "streets": {
             "enabled": true,
-            "maxBots": 35,
-            "minBots": 18,
+            "maxBots": 22,
+            "minBots": 12,
             "botTypes": {
                 "assault": {
                     "enabled": true,
@@ -436,10 +436,10 @@
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 25,
-                "waveBots": 5,
+                "raidStartBots": 18,
+                "waveBots": 3,
                 "waveDelay": 300,
-                "maxWaves": 3,
+                "maxWaves": 2,
                 "scavBehavior": "mixed",
                 "pmcBehavior": "tactical"
             }
@@ -451,7 +451,7 @@
             "gearTier": 1,
             "difficulty": "normal",
             "spawnChance": 0.8,
-            "maxCount": 15,
+            "maxCount": 12,
             "allowedMaps": ["*"],
             "gearRestrictions": {
                 "weapons": [],
