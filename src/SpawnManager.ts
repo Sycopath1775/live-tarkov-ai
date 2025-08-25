@@ -32,17 +32,24 @@ export class SpawnManager {
     // Apply custom spawn configurations to the database
     public applyCustomSpawnConfig(): void {
         try {
-            this.logger.info("Applying custom spawn configurations...");
-            
             // Modify bot types in the database
             this.modifyBotTypes();
+            
+            // Apply spawn rate configurations
+            this.applySpawnRateConfigurations();
+            
+            // Apply boss spawn configurations
+            this.applyBossSpawnConfigurations();
+            
+            // Apply map-specific spawn configurations
+            this.applyMapSpawnConfigurations();
             
             // Apply gear progression if enabled
             if (this.configManager.isGearProgressionEnabled()) {
                 this.applyGearProgression();
             }
             
-            this.logger.info("Custom spawn configurations applied successfully");
+            this.logger.info("Live Tarkov spawn configuration completed");
         } catch (error) {
             this.logger.error(`Error applying custom spawn config: ${error}`);
         }
