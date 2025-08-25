@@ -193,15 +193,39 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         try {
             const configServer = container.resolve<ConfigServer>("ConfigServer");
             
-            // Try to get SPT version, but don't fail if the structure is different
+            // Try multiple methods to get SPT version
             let sptVersion = "unknown";
+            
+            // Method 1: Try CORE config
             try {
                 const coreConfig = configServer.getConfig<any>("CORE");
                 if (coreConfig && coreConfig.version) {
                     sptVersion = coreConfig.version;
                 }
             } catch (error) {
-                // Config structure might be different, continue with unknown version
+                // Continue to next method
+            }
+            
+            // Method 2: Try different config names
+            if (sptVersion === "unknown") {
+                try {
+                    const sptConfig = configServer.getConfig<any>("SPT");
+                    if (sptConfig && sptConfig.version) {
+                        sptVersion = sptConfig.version;
+                    }
+                } catch (error) {
+                    // Continue to next method
+                }
+            }
+            
+            // Method 3: Try global SPT version
+            if (sptVersion === "unknown" && (globalThis as any).G_SPTVERSION) {
+                sptVersion = (globalThis as any).G_SPTVERSION;
+            }
+            
+            // Method 4: Try process environment
+            if (sptVersion === "unknown" && (process as any).env && (process as any).env.SPT_VERSION) {
+                sptVersion = (process as any).env.SPT_VERSION;
             }
             
             console.log(`[LiveTarkovAI] SPT Version detected: ${sptVersion}`);
