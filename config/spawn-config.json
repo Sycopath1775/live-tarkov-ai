@@ -34,6 +34,14 @@
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
+                },
+                "partisan": {
+                    "enabled": true,
+                    "maxCount": 1,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -260,6 +268,14 @@
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
+                },
+                "partisan": {
+                    "enabled": true,
+                    "maxCount": 1,
+                    "spawnChance": 0.15,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -277,6 +293,22 @@
                     "resortArea": true,
                     "spawnDensity": "high"
                 },
+                "pier": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 4,
+                    "botTypes": ["assault", "pmcbear"],
+                    "pierArea": true,
+                    "spawnDensity": "medium"
+                },
+                "gasStation": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 3,
+                    "botTypes": ["assault", "pmcbear"],
+                    "gasStationArea": true,
+                    "spawnDensity": "medium"
+                },
                 "bossZone": {
                     "enabled": true,
                     "priority": 3,
@@ -285,6 +317,15 @@
                     "excludeRegularScavs": true,
                     "minDistanceFromRegularSpawns": 100,
                     "resortArea": true
+                },
+                "goonsZone": {
+                    "enabled": true,
+                    "priority": 3,
+                    "maxBots": 4,
+                    "botTypes": ["assaultgroup"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 80,
+                    "multipleLocations": ["resort", "pier", "gasStation"]
                 }
             },
             "liveTarkovSettings": {
@@ -316,10 +357,18 @@
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
                 },
+                "bosszryachiy": {
+                    "enabled": true,
+                    "maxCount": 1,
+                    "spawnChance": 0.30,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
+                },
                 "assaultgroup": {
                     "enabled": true,
-                    "maxCount": 3,
-                    "spawnChance": 0.15,
+                    "maxCount": 4,
+                    "spawnChance": 0.20,
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
@@ -330,7 +379,24 @@
                     "enabled": true,
                     "priority": 1,
                     "maxBots": 4,
-                    "botTypes": ["assault", "pmcbear", "assaultgroup"]
+                    "botTypes": ["assault", "pmcbear"]
+                },
+                "mountain": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 5,
+                    "botTypes": ["bosszryachiy", "assaultgroup"],
+                    "excludeRegularScavs": true,
+                    "minDistanceFromRegularSpawns": 120,
+                    "mountainArea": true
+                },
+                "waterTreatment": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 3,
+                    "botTypes": ["assaultgroup"],
+                    "waterTreatmentArea": true,
+                    "spawnDensity": "medium"
                 }
             },
             "liveTarkovSettings": {
@@ -471,6 +537,14 @@
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
+                },
+                "bosskollontay": {
+                    "enabled": true,
+                    "maxCount": 1,
+                    "spawnChance": 0.20,
+                    "gearTier": 4,
+                    "difficulty": "impossible",
+                    "spawnTiming": "raidStart"
                 }
             },
             "spawnPoints": {
@@ -483,10 +557,11 @@
                 "bossZone": {
                     "enabled": true,
                     "priority": 2,
-                    "maxBots": 1,
-                    "botTypes": ["bosskaban"],
+                    "maxBots": 2,
+                    "botTypes": ["bosskaban", "bosskollontay"],
                     "excludeRegularScavs": true,
-                    "minDistanceFromRegularSpawns": 150
+                    "minDistanceFromRegularSpawns": 150,
+                    "lexosArea": true
                 }
             },
             "liveTarkovSettings": {
@@ -621,6 +696,26 @@
                 "vision": 1.0
             }
         },
+        "bosszryachiy": {
+            "enabled": true,
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.30,
+            "maxCount": 1,
+            "allowedMaps": ["lighthouse"],
+            "gearRestrictions": {
+                "weapons": [],
+                "armor": [],
+                "items": []
+            },
+            "liveTarkovBehavior": {
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
+            }
+        },
         "bossgluhar": {
             "enabled": true,
             "gearTier": 4,
@@ -681,6 +776,26 @@
                 "vision": 1.0
             }
         },
+        "bosskollontay": {
+            "enabled": true,
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.20,
+            "maxCount": 1,
+            "allowedMaps": ["streets"],
+            "gearRestrictions": {
+                "weapons": [],
+                "armor": [],
+                "items": []
+            },
+            "liveTarkovBehavior": {
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
+            }
+        },
         "bosstagilla": {
             "enabled": true,
             "gearTier": 4,
@@ -708,6 +823,26 @@
             "spawnChance": 0.15,
             "maxCount": 3,
             "allowedMaps": ["bigmap", "woods", "lighthouse", "shoreline"],
+            "gearRestrictions": {
+                "weapons": [],
+                "armor": [],
+                "items": []
+            },
+            "liveTarkovBehavior": {
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
+            }
+        },
+        "partisan": {
+            "enabled": true,
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.15,
+            "maxCount": 1,
+            "allowedMaps": ["*"],
             "gearRestrictions": {
                 "weapons": [],
                 "armor": [],
