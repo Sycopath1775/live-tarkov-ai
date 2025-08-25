@@ -151,8 +151,16 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
             const sptVersion = configServer.getConfig<ICoreConfig>(ConfigTypes.CORE).version;
             const minVersion = "3.11.0";
             
+            console.log(`[LiveTarkovAI] SPT Version detected: ${sptVersion}`);
+            
             // Simple version check - can be enhanced with semver
-            return sptVersion >= minVersion;
+            const isCompatible = sptVersion >= minVersion;
+            if (isCompatible) {
+                console.log(`[LiveTarkovAI] ✓ SPT version ${sptVersion} is compatible`);
+            } else {
+                console.warn(`[LiveTarkovAI] ⚠️ SPT version ${sptVersion} may have compatibility issues`);
+            }
+            return isCompatible;
         } catch (error) {
             console.warn("[LiveTarkovAI] Could not verify SPT version, continuing...");
             return true;
@@ -189,24 +197,81 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
     // Detect SAIN mod using multiple methods
     private detectSAINMod(): boolean {
         try {
-            // Method 1: Try to require SAIN directly
+            console.log("[LiveTarkovAI] [DEBUG] Checking for SAIN mod...");
+            
+            // Method 1: Check for SAIN in mods folder (most reliable)
+            const sainPaths = [
+                path.join(process.cwd(), "user", "mods", "zSolarint-SAIN-ServerMod"),
+                path.join(process.cwd(), "user", "mods", "SAIN"),
+                path.join(process.cwd(), "user", "mods", "sain"),
+                path.join(__dirname, "..", "..", "zSolarint-SAIN-ServerMod"),
+                path.join(__dirname, "..", "..", "SAIN"),
+                path.join(__dirname, "..", "..", "sain")
+            ];
+
+            for (const sainPath of sainPaths) {
+                if (fs.existsSync(sainPath)) {
+                    console.log(`[LiveTarkovAI] [DEBUG] SAIN found at: ${sainPath}`);
+                    return true;
+                }
+            }
+
+            // Method 2: Check for SAIN in BepInEx plugins folder
+            const bepinExPaths = [
+                path.join(process.cwd(), "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "..", "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "BepInEx", "plugins")
+            ];
+
+            for (const bepinExPath of bepinExPaths) {
+                if (fs.existsSync(bepinExPath)) {
+                    const sainFolder = path.join(bepinExPath, "SAIN");
+                    if (fs.existsSync(sainFolder)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] SAIN found in BepInEx at: ${sainFolder}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 3: Check for SAIN in global scope
+            if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
+                console.log("[LiveTarkovAI] [DEBUG] SAIN found in global scope");
+                return true;
+            }
+
+            // Method 4: Check for SAIN in require.cache
+            for (const modulePath in require.cache) {
+                if (modulePath.toLowerCase().includes("sain") || modulePath.toLowerCase().includes("zSolarint")) {
+                    console.log(`[LiveTarkovAI] [DEBUG] SAIN found in require.cache: ${modulePath}`);
+                    return true;
+                }
+            }
+
+            // Method 5: Check for SAIN in process modules
+            if (process.mainModule && process.mainModule.children) {
+                for (const child of process.mainModule.children) {
+                    if (child.filename && (child.filename.toLowerCase().includes("sain") || child.filename.toLowerCase().includes("zSolarint"))) {
+                        console.log(`[LiveTarkovAI] [DEBUG] SAIN found in process modules: ${child.filename}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 6: Try to require SAIN directly
             try {
                 require("zSolarint-SAIN-ServerMod");
+                console.log("[LiveTarkovAI] [DEBUG] SAIN found via require");
                 return true;
             } catch (error) {
                 // Continue to next method
             }
 
-            // Method 2: Check for SAIN in global scope
-            if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
-                return true;
-            }
-
-            // Method 3: Check for SAIN in SPT container if available
+            // Method 7: Check for SAIN in SPT container if available
             try {
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("SAINService")) {
+                        console.log("[LiveTarkovAI] [DEBUG] SAIN found in SPT container");
                         return true;
                     }
                 }
@@ -214,8 +279,10 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 // Continue to next method
             }
 
+            console.log("[LiveTarkovAI] [DEBUG] SAIN not found by any method");
             return false;
         } catch (error) {
+            console.log(`[LiveTarkovAI] [DEBUG] Error detecting SAIN: ${error}`);
             return false;
         }
     }
@@ -223,24 +290,82 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
     // Detect Fika mod using multiple methods
     private detectFikaMod(): boolean {
         try {
-            // Method 1: Try to require Fika directly
+            console.log("[LiveTarkovAI] [DEBUG] Checking for Fika mod...");
+            
+            // Method 1: Check for Fika in mods folder (most reliable)
+            const fikaPaths = [
+                path.join(process.cwd(), "user", "mods", "fika-server"),
+                path.join(process.cwd(), "user", "mods", "Fika"),
+                path.join(process.cwd(), "user", "mods", "fika"),
+                path.join(__dirname, "..", "..", "fika-server"),
+                path.join(__dirname, "..", "..", "Fika"),
+                path.join(__dirname, "..", "..", "fika")
+            ];
+
+            for (const fikaPath of fikaPaths) {
+                if (fs.existsSync(fikaPath)) {
+                    console.log(`[LiveTarkovAI] [DEBUG] Fika found at: ${fikaPath}`);
+                    return true;
+                }
+            }
+
+            // Method 2: Check for Fika in BepInEx plugins folder
+            const bepinExPaths = [
+                path.join(process.cwd(), "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "..", "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "BepInEx", "plugins")
+            ];
+
+            for (const bepinExPath of bepinExPaths) {
+                if (fs.existsSync(bepinExPath)) {
+                    const fikaCore = path.join(bepinExPath, "Fika.Core.dll");
+                    const fikaHeadless = path.join(bepinExPath, "Fika.Headless.dll");
+                    if (fs.existsSync(fikaCore) || fs.existsSync(fikaHeadless)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] Fika found in BepInEx at: ${bepinExPath}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 3: Check for Fika in global scope
+            if (globalThis.FikaService || globalThis.FikaServerService || globalThis.fika) {
+                console.log("[LiveTarkovAI] [DEBUG] Fika found in global scope");
+                return true;
+            }
+
+            // Method 4: Check for Fika in require.cache
+            for (const modulePath in require.cache) {
+                if (modulePath.toLowerCase().includes("fika")) {
+                    console.log(`[LiveTarkovAI] [DEBUG] Fika found in require.cache: ${modulePath}`);
+                    return true;
+                }
+            }
+
+            // Method 5: Check for Fika in process modules
+            if (process.mainModule && process.mainModule.children) {
+                for (const child of process.mainModule.children) {
+                    if (child.filename && child.filename.toLowerCase().includes("fika")) {
+                        console.log(`[LiveTarkovAI] [DEBUG] Fika found in process modules: ${child.filename}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 6: Try to require Fika directly
             try {
                 require("fika-server");
+                console.log("[LiveTarkovAI] [DEBUG] Fika found via require");
                 return true;
             } catch (error) {
                 // Continue to next method
             }
 
-            // Method 2: Check for Fika in global scope
-            if (globalThis.FikaService || globalThis.FikaServerService || globalThis.fika) {
-                return true;
-            }
-
-            // Method 3: Check for Fika in SPT container if available
+            // Method 7: Check for Fika in SPT container if available
             try {
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("FikaService")) {
+                        console.log("[LiveTarkovAI] [DEBUG] Fika found in SPT container");
                         return true;
                     }
                 }
@@ -248,8 +373,10 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 // Continue to next method
             }
 
+            console.log("[LiveTarkovAI] [DEBUG] Fika not found by any method");
             return false;
         } catch (error) {
+            console.log(`[LiveTarkovAI] [DEBUG] Error detecting Fika: ${error}`);
             return false;
         }
     }
@@ -285,16 +412,44 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
     // Detect BigBrain plugin
     private detectBigBrainPlugin(): boolean {
         try {
-            // Method 1: Check for global BigBrain objects
+            console.log("[LiveTarkovAI] [DEBUG] Checking for BigBrain plugin...");
+            
+            // Method 1: Check BepInEx plugins folder (most reliable)
+            const bepinExPaths = [
+                path.join(process.cwd(), "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "..", "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "BepInEx", "plugins")
+            ];
+
+            for (const bepinExPath of bepinExPaths) {
+                if (fs.existsSync(bepinExPath)) {
+                    const bigBrainDll = path.join(bepinExPath, "DrakiaXYZ-BigBrain.dll");
+                    if (fs.existsSync(bigBrainDll)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] BigBrain found at: ${bigBrainDll}`);
+                        return true;
+                    }
+                    
+                    // Also check for folder-based plugins
+                    const bigBrainFolder = path.join(bepinExPath, "DrakiaXYZ-BigBrain");
+                    if (fs.existsSync(bigBrainFolder)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] BigBrain folder found at: ${bigBrainFolder}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 2: Check for global BigBrain objects
             if (globalThis.BigBrain || globalThis.BigBrainService || globalThis.BigBrainPlugin) {
+                console.log("[LiveTarkovAI] [DEBUG] BigBrain found in global scope");
                 return true;
             }
 
-            // Method 2: Check if we can access BigBrain through SPT services
+            // Method 3: Check if we can access BigBrain through SPT services
             try {
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("BigBrainService")) {
+                        console.log("[LiveTarkovAI] [DEBUG] BigBrain found in SPT container");
                         return true;
                     }
                 }
@@ -302,48 +457,28 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 // Continue to next method
             }
 
-            // Method 3: Check for BigBrain in process modules
+            // Method 4: Check for BigBrain in process modules
             if (process.mainModule && process.mainModule.children) {
                 for (const child of process.mainModule.children) {
                     if (child.filename && child.filename.includes("DrakiaXYZ-BigBrain")) {
+                        console.log(`[LiveTarkovAI] [DEBUG] BigBrain found in process modules: ${child.filename}`);
                         return true;
                     }
                 }
             }
 
-            // Method 4: Check for BigBrain in require.cache
+            // Method 5: Check for BigBrain in require.cache
             for (const modulePath in require.cache) {
                 if (modulePath.includes("DrakiaXYZ-BigBrain")) {
+                    console.log(`[LiveTarkovAI] [DEBUG] BigBrain found in require.cache: ${modulePath}`);
                     return true;
                 }
             }
 
-            // Method 5: Check file system for BepInEx plugin files
-            try {
-                const possiblePaths = [
-                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(__dirname, "..", "..", "..", "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(__dirname, "..", "..", "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll")
-                ];
-
-                for (const pluginPath of possiblePaths) {
-                    if (fs.existsSync(pluginPath)) {
-                        return true;
-                    }
-                }
-
-                // Method 6: Scan BepInEx plugins folder comprehensively
-                if (this.scanBepInExFolder("DrakiaXYZ-BigBrain")) {
-                    return true;
-                }
-
-            } catch (error) {
-                // File system check failed, continue
-            }
-
+            console.log("[LiveTarkovAI] [DEBUG] BigBrain not found by any method");
             return false;
         } catch (error) {
+            console.log(`[LiveTarkovAI] [DEBUG] Error detecting BigBrain: ${error}`);
             return false;
         }
     }
@@ -351,16 +486,44 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
     // Detect Waypoints plugin
     private detectWaypointsPlugin(): boolean {
         try {
-            // Method 1: Check for global Waypoints objects
+            console.log("[LiveTarkovAI] [DEBUG] Checking for Waypoints plugin...");
+            
+            // Method 1: Check BepInEx plugins folder (most reliable)
+            const bepinExPaths = [
+                path.join(process.cwd(), "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "..", "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "BepInEx", "plugins")
+            ];
+
+            for (const bepinExPath of bepinExPaths) {
+                if (fs.existsSync(bepinExPath)) {
+                    const waypointsDll = path.join(bepinExPath, "DrakiaXYZ-Waypoints.dll");
+                    if (fs.existsSync(waypointsDll)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] Waypoints found at: ${waypointsDll}`);
+                        return true;
+                    }
+                    
+                    // Also check for folder-based plugins
+                    const waypointsFolder = path.join(bepinExPath, "DrakiaXYZ-Waypoints");
+                    if (fs.existsSync(waypointsFolder)) {
+                        console.log(`[LiveTarkovAI] [DEBUG] Waypoints folder found at: ${waypointsFolder}`);
+                        return true;
+                    }
+                }
+            }
+
+            // Method 2: Check for global Waypoints objects
             if (globalThis.Waypoints || globalThis.WaypointsService || globalThis.WaypointsPlugin) {
+                console.log("[LiveTarkovAI] [DEBUG] Waypoints found in global scope");
                 return true;
             }
 
-            // Method 2: Check if we can access Waypoints through SPT services
+            // Method 3: Check if we can access Waypoints through SPT services
             try {
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("WaypointsService")) {
+                        console.log("[LiveTarkovAI] [DEBUG] Waypoints found in SPT container");
                         return true;
                     }
                 }
@@ -368,48 +531,28 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 // Continue to next method
             }
 
-            // Method 3: Check for Waypoints in process modules
+            // Method 4: Check for Waypoints in process modules
             if (process.mainModule && process.mainModule.children) {
                 for (const child of process.mainModule.children) {
-                    if (child.filename && child.filename.includes("DrakiaXYZ-BigBrain")) {
+                    if (child.filename && child.filename.includes("DrakiaXYZ-Waypoints")) {
+                        console.log(`[LiveTarkovAI] [DEBUG] Waypoints found in process modules: ${child.filename}`);
                         return true;
                     }
                 }
             }
 
-            // Method 4: Check for Waypoints in require.cache
+            // Method 5: Check for Waypoints in require.cache
             for (const modulePath in require.cache) {
-                if (modulePath.includes("DrakiaXYZ-BigBrain")) {
+                if (modulePath.includes("DrakiaXYZ-Waypoints")) {
+                    console.log(`[LiveTarkovAI] [DEBUG] Waypoints found in require.cache: ${modulePath}`);
                     return true;
                 }
             }
 
-            // Method 5: Check file system for BepInEx plugin files
-            try {
-                const possiblePaths = [
-                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(__dirname, "..", "..", "..", "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll"),
-                    path.join(__dirname, "..", "..", "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll")
-                ];
-
-                for (const pluginPath of possiblePaths) {
-                    if (fs.existsSync(pluginPath)) {
-                        return true;
-                    }
-                }
-
-                // Method 6: Scan BepInEx plugins folder comprehensively
-                if (this.scanBepInExFolder("DrakiaXYZ-BigBrain")) {
-                    return true;
-                }
-
-            } catch (error) {
-                // File system check failed, continue
-            }
-
+            console.log("[LiveTarkovAI] [DEBUG] Waypoints not found by any method");
             return false;
         } catch (error) {
+            console.log(`[LiveTarkovAI] [DEBUG] Error detecting Waypoints: ${error}`);
             return false;
         }
     }
