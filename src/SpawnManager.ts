@@ -18,28 +18,28 @@ import {
 
 export class SpawnManager {
     private databaseServer: DatabaseServer;
-    private botHelper: BotHelper;
-    private botEquipmentModService: BotEquipmentModService;
-    private botModificationService: BotModificationService;
-    private botSpawnService: BotSpawnService;
-    private botGenerationCacheService: BotGenerationCacheService;
-    private randomUtil: RandomUtil;
-    private timeUtil: TimeUtil;
-    private itemHelper: ItemHelper;
+    private botHelper: BotHelper | null;
+    private botEquipmentModService: BotEquipmentModService | null;
+    private botModificationService: BotModificationService | null;
+    private botSpawnService: BotSpawnService | null;
+    private botGenerationCacheService: BotGenerationCacheService | null;
+    private randomUtil: RandomUtil | null;
+    private timeUtil: TimeUtil | null;
+    private itemHelper: ItemHelper | null;
     private logger: Logger;
     private configManager: ConfigManager;
     private sainAvailable: boolean = false;
 
     constructor(
         databaseServer: DatabaseServer,
-        botHelper: BotHelper,
-        botEquipmentModService: BotEquipmentModService,
-        botModificationService: BotModificationService,
-        botSpawnService: BotSpawnService,
-        botGenerationCacheService: BotGenerationCacheService,
-        randomUtil: RandomUtil,
-        timeUtil: TimeUtil,
-        itemHelper: ItemHelper,
+        botHelper: BotHelper | null,
+        botEquipmentModService: BotEquipmentModService | null,
+        botModificationService: BotModificationService | null,
+        botSpawnService: BotSpawnService | null,
+        botGenerationCacheService: BotGenerationCacheService | null,
+        randomUtil: RandomUtil | null,
+        timeUtil: TimeUtil | null,
+        itemHelper: ItemHelper | null,
         logger: Logger
     ) {
         this.databaseServer = databaseServer;
