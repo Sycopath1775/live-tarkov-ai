@@ -71,5 +71,11 @@ For issues or questions, check the [GitHub repository](https://github.com/Sycopa
 ---
 
 **Developer**: Sycopath  
-**Version**: 1.0.0  
+**Version**: 1.0.1  
 **License**: MIT License
+
+---
+
+## ⚠️ AI-Generated Content Notice
+
+**This mod contains AI-generated content.** The core functionality, algorithms, and integration logic were developed with AI assistance. All features have been tested and verified to work correctly in SPT.
