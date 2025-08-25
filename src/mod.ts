@@ -46,19 +46,12 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         try {
             this.logger.info("Configuring live Tarkov spawn data...");
             
-            // Get required services from container
+            // Resolve required SPT services
             const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
             
-            // Initialize spawn manager
-            this.spawnManager = new SpawnManager(
-                databaseServer,
-                this.configManager!,
-                this.logger
-            );
+            // Initialize SpawnManager with container for REAL spawn control
+            this.spawnManager = new SpawnManager(databaseServer, this.configManager!, this.logger, container);
             this.spawnManager.initialize();
-            
-            // Apply custom spawn configurations
-            this.spawnManager.applyCustomSpawnConfig();
             
             this.logger.info("Live Tarkov spawn data configuration completed!");
         } catch (error) {
