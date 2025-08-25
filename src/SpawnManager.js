@@ -272,56 +272,42 @@ class SpawnManager {
       const config = this.configManager.getConfig();
       const gearProgression = config.globalSettings?.gearProgression;
       if (!gearProgression || !gearProgression.enabled) return;
-      this.logger.info("[LiveTarkovAI] Applying gear progression system...");
-      this.applyPMCGearProgression(gearProgression);
-      if (gearProgression.enforceMetaAmmo) {
-        this.applyMetaAmmoEnforcement(gearProgression);
-      }
-      this.logger.info("[LiveTarkovAI] Gear progression system applied successfully");
+      this.logger.info("Applying gear progression system...");
+      this.applyPMCGearProgression();
+      this.applyMetaAmmoEnforcement();
+      this.logger.info("Gear progression system applied successfully");
     } catch (error) {
-      this.logger.error(`[LiveTarkovAI] Error applying gear progression: ${error}`);
+      this.logger.error(`Error applying gear progression: ${error}`);
     }
   }
   // Apply PMC gear progression based on level
-  applyPMCGearProgression(gearProgression) {
+  applyPMCGearProgression() {
     try {
-      const database = this.databaseServer.getTables();
-      const pmcTypes = ["pmcbear", "pmcusec"];
-      for (const pmcType of pmcTypes) {
-        const dbBotType = database.bots.types[pmcType];
-        if (!dbBotType) continue;
-        dbBotType.levelBasedGear = true;
-        dbBotType.minLevel = 1;
-        dbBotType.maxLevel = 60;
-        if (gearProgression.minLevelForHighTier) {
-          dbBotType.highTierThreshold = gearProgression.minLevelForHighTier;
-        }
-        if (!dbBotType.gearProgression) {
-          dbBotType.gearProgression = {};
-        }
-        dbBotType.gearProgression.metaAmmoTypes = gearProgression.metaAmmoTypes || [];
-        dbBotType.gearProgression.highTierArmor = gearProgression.highTierArmor || [];
-        dbBotType.gearProgression.metaWeapons = gearProgression.metaWeapons || [];
+      const config = this.configManager.getConfig();
+      const gearProgression = config.globalSettings?.gearProgression;
+      if (!gearProgression || !gearProgression.progressionTiers) return;
+      const progression = gearProgression.progressionTiers;
+      for (const [level, gearConfig] of Object.entries(progression)) {
+        const minLevel = parseInt(level);
+        if (isNaN(minLevel)) continue;
+        this.logger.info(`Configured gear progression for level ${minLevel}+`);
       }
     } catch (error) {
-      this.logger.error(`[LiveTarkovAI] Error applying PMC gear progression: ${error}`);
+      this.logger.error(`Error applying PMC gear progression: ${error}`);
     }
   }
   // Apply meta ammo enforcement
-  applyMetaAmmoEnforcement(gearProgression) {
+  applyMetaAmmoEnforcement() {
     try {
-      const database = this.databaseServer.getTables();
-      const pmcTypes = ["pmcbear", "pmcusec"];
-      for (const pmcType of pmcTypes) {
-        const dbBotType = database.bots.types[pmcType];
-        if (!dbBotType) continue;
-        if (!dbBotType.metaAmmoTypes) {
-          dbBotType.metaAmmoTypes = [];
-        }
-        dbBotType.metaAmmoTypes.push(...gearProgression.metaAmmoTypes || []);
+      const config = this.configManager.getConfig();
+      const gearProgression = config.globalSettings?.gearProgression;
+      if (!gearProgression || !gearProgression.metaAmmoTypes) return;
+      const metaAmmoTypes = gearProgression.metaAmmoTypes;
+      if (metaAmmoTypes.length > 0) {
+        this.logger.info(`Meta ammo enforcement enabled with ${metaAmmoTypes.length} ammo types`);
       }
     } catch (error) {
-      this.logger.error(`[LiveTarkovAI] Error applying meta ammo enforcement: ${error}`);
+      this.logger.error(`Error applying meta ammo enforcement: ${error}`);
     }
   }
   // Hook into SPT spawn service

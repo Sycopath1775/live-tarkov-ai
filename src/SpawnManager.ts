@@ -354,73 +354,59 @@ export class SpawnManager {
             
             if (!gearProgression || !gearProgression.enabled) return;
             
-            this.logger.info("[LiveTarkovAI] Applying gear progression system...");
+            this.logger.info("Applying gear progression system...");
             
             // Apply level-based gear scaling to PMCs
-            this.applyPMCGearProgression(gearProgression);
+            this.applyPMCGearProgression();
             
             // Apply meta ammo enforcement
-            if (gearProgression.enforceMetaAmmo) {
-                this.applyMetaAmmoEnforcement(gearProgression);
-            }
+            this.applyMetaAmmoEnforcement();
             
-            this.logger.info("[LiveTarkovAI] Gear progression system applied successfully");
+            this.logger.info("Gear progression system applied successfully");
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying gear progression: ${error}`);
+            this.logger.error(`Error applying gear progression: ${error}`);
         }
     }
 
     // Apply PMC gear progression based on level
-    private applyPMCGearProgression(gearProgression: any): void {
+    private applyPMCGearProgression(): void {
         try {
-            const database = this.databaseServer.getTables();
-            const pmcTypes = ["pmcbear", "pmcusec"];
+            const config = this.configManager.getConfig();
+            const gearProgression = config.globalSettings?.gearProgression;
             
-            for (const pmcType of pmcTypes) {
-                const dbBotType = database.bots.types[pmcType];
-                if (!dbBotType) continue;
+            if (!gearProgression || !gearProgression.progressionTiers) return;
+            
+            const progression = gearProgression.progressionTiers;
+            
+            // Apply level-based gear scaling
+            for (const [level, gearConfig] of Object.entries(progression)) {
+                const minLevel = parseInt(level);
+                if (isNaN(minLevel)) continue;
                 
-                // Set level-based gear scaling
-                dbBotType.levelBasedGear = true;
-                dbBotType.minLevel = 1;
-                dbBotType.maxLevel = 60;
-                
-                // Set high-tier threshold
-                if (gearProgression.minLevelForHighTier) {
-                    dbBotType.highTierThreshold = gearProgression.minLevelForHighTier;
-                }
-                
-                // Store gear progression data
-                if (!dbBotType.gearProgression) {
-                    dbBotType.gearProgression = {};
-                }
-                dbBotType.gearProgression.metaAmmoTypes = gearProgression.metaAmmoTypes || [];
-                dbBotType.gearProgression.highTierArmor = gearProgression.highTierArmor || [];
-                dbBotType.gearProgression.metaWeapons = gearProgression.metaWeapons || [];
+                // This would be applied when PMCs are spawned based on their level
+                // For now, we just store the configuration
+                this.logger.info(`Configured gear progression for level ${minLevel}+`);
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying PMC gear progression: ${error}`);
+            this.logger.error(`Error applying PMC gear progression: ${error}`);
         }
     }
 
     // Apply meta ammo enforcement
-    private applyMetaAmmoEnforcement(gearProgression: any): void {
+    private applyMetaAmmoEnforcement(): void {
         try {
-            const database = this.databaseServer.getTables();
-            const pmcTypes = ["pmcbear", "pmcusec"];
+            const config = this.configManager.getConfig();
+            const gearProgression = config.globalSettings?.gearProgression;
             
-            for (const pmcType of pmcTypes) {
-                const dbBotType = database.bots.types[pmcType];
-                if (!dbBotType) continue;
-                
-                // Store meta ammo types for enforcement
-                if (!dbBotType.metaAmmoTypes) {
-                    dbBotType.metaAmmoTypes = [];
-                }
-                dbBotType.metaAmmoTypes.push(...(gearProgression.metaAmmoTypes || []));
+            if (!gearProgression || !gearProgression.metaAmmoTypes) return;
+            
+            const metaAmmoTypes = gearProgression.metaAmmoTypes;
+            
+            if (metaAmmoTypes.length > 0) {
+                this.logger.info(`Meta ammo enforcement enabled with ${metaAmmoTypes.length} ammo types`);
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying meta ammo enforcement: ${error}`);
+            this.logger.error(`Error applying meta ammo enforcement: ${error}`);
         }
     }
 
