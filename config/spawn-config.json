@@ -228,24 +228,24 @@
         },
         "shoreline": {
             "enabled": true,
-            "maxBots": 18,
-            "minBots": 8,
+            "maxBots": 22,
+            "minBots": 10,
             "botTypes": {
                 "assault": {
                     "enabled": true,
-                    "maxCount": 12,
+                    "maxCount": 14,
                     "gearTier": 1,
                     "difficulty": "normal",
                     "spawnTiming": "raidStart"
                 },
                 "pmcbear": {
                     "enabled": true,
-                    "maxCount": 10,
+                    "maxCount": 12,
                     "gearTier": 2,
                     "difficulty": "hard",
                     "spawnTiming": "raidStart"
                 },
-                "bossgluhar": {
+                "bosssanitar": {
                     "enabled": true,
                     "maxCount": 1,
                     "spawnChance": 0.35,
@@ -255,8 +255,8 @@
                 },
                 "assaultgroup": {
                     "enabled": true,
-                    "maxCount": 3,
-                    "spawnChance": 0.15,
+                    "maxCount": 4,
+                    "spawnChance": 0.25,
                     "gearTier": 4,
                     "difficulty": "impossible",
                     "spawnTiming": "raidStart"
@@ -266,24 +266,33 @@
                 "default": {
                     "enabled": true,
                     "priority": 1,
-                    "maxBots": 3,
+                    "maxBots": 4,
                     "botTypes": ["assault", "pmcbear"]
+                },
+                "resort": {
+                    "enabled": true,
+                    "priority": 2,
+                    "maxBots": 6,
+                    "botTypes": ["assault", "pmcbear"],
+                    "resortArea": true,
+                    "spawnDensity": "high"
                 },
                 "bossZone": {
                     "enabled": true,
-                    "priority": 2,
-                    "maxBots": 4,
-                    "botTypes": ["bossgluhar", "assaultgroup"],
+                    "priority": 3,
+                    "maxBots": 5,
+                    "botTypes": ["bosssanitar", "assaultgroup"],
                     "excludeRegularScavs": true,
-                    "minDistanceFromRegularSpawns": 120
+                    "minDistanceFromRegularSpawns": 100,
+                    "resortArea": true
                 }
             },
             "liveTarkovSettings": {
                 "useAuthenticSpawns": true,
-                "raidStartBots": 12,
-                "waveBots": 3,
-                "waveDelay": 360,
-                "maxWaves": 2,
+                "raidStartBots": 16,
+                "waveBots": 4,
+                "waveDelay": 300,
+                "maxWaves": 3,
                 "scavBehavior": "mixed",
                 "pmcBehavior": "tactical"
             }
@@ -579,6 +588,26 @@
             "spawnChance": 0.4,
             "maxCount": 1,
             "allowedMaps": ["interchange"],
+            "gearRestrictions": {
+                "weapons": [],
+                "armor": [],
+                "items": []
+            },
+            "liveTarkovBehavior": {
+                "accuracy": 0.95,
+                "reactionTime": 0.3,
+                "aggression": 1.0,
+                "hearing": 1.0,
+                "vision": 1.0
+            }
+        },
+        "bosssanitar": {
+            "enabled": true,
+            "gearTier": 4,
+            "difficulty": "impossible",
+            "spawnChance": 0.35,
+            "maxCount": 1,
+            "allowedMaps": ["shoreline"],
             "gearRestrictions": {
                 "weapons": [],
                 "armor": [],
