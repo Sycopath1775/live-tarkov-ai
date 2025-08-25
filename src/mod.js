@@ -3,82 +3,44 @@
 // Create the mod object that implements the required SPT interfaces
 const mod = {
     // IPreSptLoadMod interface
-    preSptLoad: function() {
+    preSptLoad: function(container) {
         try {
-            console.log("[Live Tarkov - AI] Pre-SPT load phase...");
+            console.log("[LiveTarkovAI] Initializing Live Tarkov - AI Mod...");
             
-            // Initialize managers
+            // Initialize configuration
             this.configManager = new (require("./ConfigManager").ConfigManager)();
-            this.hotZoneManager = new (require("./HotZoneManager").HotZoneManager)(this.configManager);
-            this.spawnManager = new (require("./SpawnManager").SpawnManager)(this.configManager, this.hotZoneManager);
+            this.configManager.initialize();
             
-            // Initialize new integration services
-            this.fikaIntegrationService = new (require("./FikaIntegrationService").FikaIntegrationService)(
-                this.configManager.getFikaIntegrationConfig()
-            );
-            this.bushShootingService = new (require("./BushShootingService").BushShootingService)(
-                this.configManager.getBushShootingConfig()
-            );
-            this.sainIntegrationService = new (require("./SainIntegrationService").SainIntegrationService)(
-                this.configManager.getSainIntegrationConfig()
-            );
-            
-            console.log("[Live Tarkov - AI] All managers initialized");
+            console.log("[LiveTarkovAI] Live Tarkov - AI Mod initialized successfully!");
         } catch (error) {
-            console.error("[Live Tarkov - AI] Error initializing managers:", error);
+            console.error("[LiveTarkovAI] Error during preSptLoad:", error);
         }
     },
 
     // IPostDBLoadMod interface
-    postDBLoad: function(database) {
+    postDBLoad: function(container) {
         try {
-            console.log("[Live Tarkov - AI] Post-DB load phase...");
+            console.log("[LiveTarkovAI] Configuring live Tarkov spawn data...");
             
-            // Initialize integration services
-            if (this.fikaIntegrationService) {
-                try {
-                    this.fikaIntegrationService.initialize(database);
-                    console.log("[Live Tarkov - AI] Fika integration service initialized");
-                } catch (error) {
-                    console.error("[Live Tarkov - AI] Error initializing Fika integration:", error);
-                }
-            }
+            // Resolve required SPT services
+            const databaseServer = container.resolve("DatabaseServer");
             
-            // Initialize bush shooting restrictions
-            if (this.bushShootingService) {
-                try {
-                    console.log("[Live Tarkov - AI] Bush shooting restrictions status:", 
-                        this.bushShootingService.getRestrictionStatus());
-                } catch (error) {
-                    console.error("[Live Tarkov - AI] Error getting bush shooting status:", error);
-                }
-            }
+            // Initialize SpawnManager with container for REAL spawn control
+            this.spawnManager = new (require("./SpawnManager").SpawnManager)(databaseServer, this.configManager, this.logger, container);
+            this.spawnManager.initialize();
             
-            // Initialize SAIN integration
-            if (this.sainIntegrationService) {
-                try {
-                    console.log("[Live Tarkov - AI] SAIN integration service status:", 
-                        this.sainIntegrationService.getIntegrationStatus());
-                } catch (error) {
-                    console.error("[Live Tarkov - AI] Error getting SAIN integration status:", error);
-                }
-            }
-            
-            console.log("[Live Tarkov - AI] All integration services initialized");
+            console.log("[LiveTarkovAI] Live Tarkov spawn data configuration completed!");
         } catch (error) {
-            console.error("[Live Tarkov - AI] Error initializing integration services:", error);
+            console.error("[LiveTarkovAI] Error during postDBLoad:", error);
         }
     },
 
-    // Helper method
-    hookIntoRaidServices: function() {
-        try {
-            // Hook into raid time adjustment service to modify spawns
-            // This will be called when raids start/end
-            console.log("[Live Tarkov - AI] Hooks installed for raid services");
-        } catch (error) {
-            console.error("[Live Tarkov - AI] Error installing hooks:", error);
-        }
+    // Logger for the mod
+    logger: {
+        info: function(msg) { console.log("[LiveTarkovAI] " + msg); },
+        warn: function(msg) { console.warn("[LiveTarkovAI] " + msg); },
+        error: function(msg) { console.error("[LiveTarkovAI] " + msg); },
+        debug: function(msg) { console.log("[LiveTarkovAI] [DEBUG] " + msg); }
     }
 };
 
