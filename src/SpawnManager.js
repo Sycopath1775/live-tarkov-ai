@@ -42,9 +42,6 @@ class SpawnManager {
   applyCustomSpawnConfig() {
     try {
       this.modifyBotTypes();
-      this.applySpawnRateConfigurations();
-      this.applyBossSpawnConfigurations();
-      this.applyMapSpawnConfigurations();
       if (this.configManager.isGearProgressionEnabled()) {
         this.applyGearProgression();
       }
@@ -66,7 +63,6 @@ class SpawnManager {
         }
         const dbBotType = database.bots.types[botType];
         if (!dbBotType) {
-          this.logger.warn(`Bot type ${botType} not found in database`);
           continue;
         }
         this.applyGearTierRestrictions(dbBotType, botConfig);
@@ -76,7 +72,7 @@ class SpawnManager {
         modifiedTypes.push(botType);
       }
       if (modifiedCount > 0) {
-        this.logger.info(`Modified ${modifiedCount} bot types: ${modifiedTypes.join(", ")}`);
+        this.logger.info(`Modified ${modifiedCount} bot types`);
       }
     } catch (error) {
       this.logger.error(`Error modifying bot types: ${error}`);

@@ -35,15 +35,6 @@ export class SpawnManager {
             // Modify bot types in the database
             this.modifyBotTypes();
             
-            // Apply spawn rate configurations
-            this.applySpawnRateConfigurations();
-            
-            // Apply boss spawn configurations
-            this.applyBossSpawnConfigurations();
-            
-            // Apply map-specific spawn configurations
-            this.applyMapSpawnConfigurations();
-            
             // Apply gear progression if enabled
             if (this.configManager.isGearProgressionEnabled()) {
                 this.applyGearProgression();
@@ -70,8 +61,7 @@ export class SpawnManager {
 
                 const dbBotType = database.bots.types[botType];
                 if (!dbBotType) {
-                    this.logger.warn(`Bot type ${botType} not found in database`);
-                    continue;
+                    continue; // Don't spam warnings for missing bot types
                 }
 
                 // Apply gear tier restrictions
@@ -87,9 +77,9 @@ export class SpawnManager {
                 modifiedTypes.push(botType);
             }
 
-            // Show summary instead of individual logs
+            // Show simple summary
             if (modifiedCount > 0) {
-                this.logger.info(`Modified ${modifiedCount} bot types: ${modifiedTypes.join(', ')}`);
+                this.logger.info(`Modified ${modifiedCount} bot types`);
             }
         } catch (error) {
             this.logger.error(`Error modifying bot types: ${error}`);
