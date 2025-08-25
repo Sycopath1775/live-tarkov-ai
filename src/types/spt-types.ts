@@ -197,9 +197,11 @@ export interface ICoreConfig {
     [key: string]: any;
 }
 
-export interface ConfigTypes {
-    CORE: string;
-    [key: string]: any;
+export enum ConfigTypes {
+    CORE = "CORE",
+    BOTS = "BOTS",
+    LOCATIONS = "LOCATIONS",
+    SPAWNS = "SPAWNS"
 }
 
 export interface FileSystemSync {
