@@ -16,11 +16,17 @@
             "enabled": true,
             "enforceMetaAmmo": true,
             "levelBasedScaling": true,
-            "minLevelForHighTier": 15,
-            "maxLevelForLowTier": 20,
+            "minLevelForHighTier": 24,
+            "maxLevelForLowTier": 30,
             "metaAmmoTypes": ["7.62x39 BP", "5.56x45 M856A1", "5.45x39 BS", "7.62x51 M80", "9x39 BP"],
             "highTierArmor": ["6B43", "6B23-1", "6B13", "IOTV Gen4", "Gzhel-K"],
-            "metaWeapons": ["AK-74M", "AK-101", "M4A1", "HK416", "SCAR-H", "SR-25"]
+            "metaWeapons": ["AK-74M", "AK-101", "M4A1", "HK416", "SCAR-H", "SR-25"],
+            "progressionTiers": {
+                "level1_15": "Low tier gear only (scavs, basic PMCs)",
+                "level15_23": "Mid tier gear (PMCs with basic armor, mid-tier weapons)",
+                "level24_30": "High tier gear (PMCs with meta weapons, high-tier armor)",
+                "level30+": "Full meta loadouts (PMCs with best gear available)"
+            }
         }
     },
     "mapSettings": {
@@ -600,7 +606,8 @@
                 "levelProgression": {
                     "minLevel": 1,
                     "maxLevel": 30,
-                    "gearScaling": true
+                    "gearScaling": true,
+                    "maxGearTier": 2
                 }
             },
             "liveTarkovBehavior": {
@@ -625,7 +632,8 @@
                 "levelProgression": {
                     "minLevel": 15,
                     "maxLevel": 60,
-                    "gearScaling": true
+                    "gearScaling": true,
+                    "highTierThreshold": 24
                 }
             },
             "liveTarkovBehavior": {
@@ -650,7 +658,8 @@
                 "levelProgression": {
                     "minLevel": 15,
                     "maxLevel": 60,
-                    "gearScaling": true
+                    "gearScaling": true,
+                    "highTierThreshold": 24
                 }
             },
             "liveTarkovBehavior": {
