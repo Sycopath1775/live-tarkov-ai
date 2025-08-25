@@ -85,60 +85,104 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         try {
             console.log("[LiveTarkovAI] Configuring live Tarkov spawn data...");
             
-            // Get required services from container
+            // Get required services from container - only resolve what actually exists
             const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
             const configServer = container.resolve<ConfigServer>("ConfigServer");
-            const botHelper = container.resolve<BotHelper>("BotHelper");
-            const botEquipmentModService = container.resolve<BotEquipmentModService>("BotEquipmentModService");
-            const botModificationService = container.resolve<BotModificationService>("BotModificationService");
-            const botSpawnService = container.resolve<BotSpawnService>("BotSpawnService");
-            const botGenerationCacheService = container.resolve<BotGenerationCacheService>("BotGenerationCacheService");
-            const randomUtil = container.resolve<RandomUtil>("RandomUtil");
-            const timeUtil = container.resolve<TimeUtil>("TimeUtil");
-            const jsonUtil = container.resolve<JsonUtil>("JsonUtil");
-            const itemHelper = container.resolve<ItemHelper>("ItemHelper");
-            const locationController = container.resolve<LocationController>("LocationController");
-            const botController = container.resolve<BotController>("BotController");
             
-            // Create a mock logger since SPT might not provide one
-            const logger: Logger = {
-                info: (msg: string) => console.log(`[LiveTarkovAI] ${msg}`),
-                warn: (msg: string) => console.warn(`[LiveTarkovAI] ${msg}`),
-                error: (msg: string) => console.error(`[LiveTarkovAI] ${msg}`),
-                debug: (msg: string) => console.log(`[LiveTarkovAI] [DEBUG] ${msg}`)
-            };
+            // Try to resolve optional services, but don't fail if they don't exist
+            let botHelper: any = null;
+            let itemHelper: any = null;
+            let logger: any = null;
             
-            // Initialize spawn manager with database
+            try {
+                botHelper = container.resolve<any>("BotHelper");
+                console.log("[LiveTarkovAI] ✓ BotHelper available");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ BotHelper not available - using fallback methods");
+            }
+            
+            try {
+                itemHelper = container.resolve<any>("ItemHelper");
+                console.log("[LiveTarkovAI] ✓ ItemHelper available");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ ItemHelper not available - using fallback methods");
+            }
+            
+            try {
+                logger = container.resolve<any>("WinstonLogger");
+                console.log("[LiveTarkovAI] ✓ WinstonLogger available");
+            } catch (error) {
+                // Create a mock logger since SPT might not provide one
+                logger = {
+                    info: (msg: string) => console.log(`[LiveTarkovAI] ${msg}`),
+                    warn: (msg: string) => console.warn(`[LiveTarkovAI] ${msg}`),
+                    error: (msg: string) => console.error(`[LiveTarkovAI] ${msg}`),
+                    debug: (msg: string) => console.log(`[LiveTarkovAI] [DEBUG] ${msg}`)
+                };
+                console.log("[LiveTarkovAI] ℹ️ Using fallback logger");
+            }
+            
+            // Initialize spawn manager with available services
             this.spawnManager = new SpawnManager(
                 databaseServer,
                 botHelper,
-                botEquipmentModService,
-                botModificationService,
-                botSpawnService,
-                botGenerationCacheService,
-                randomUtil,
-                timeUtil,
+                null, // botEquipmentModService - not available
+                null, // botModificationService - not available
+                null, // botSpawnService - not available
+                null, // botGenerationCacheService - not available
+                null, // randomUtil - not available
+                null, // timeUtil - not available
                 itemHelper,
                 logger
             );
             this.spawnManager.initialize();
             
-            // Initialize hot zone management
-            this.hotZoneManager = new HotZoneManager(this.configManager!, locationController, logger);
-            this.hotZoneManager.initialize();
+            // Initialize hot zone management with available services
+            try {
+                const locationController = container.resolve<any>("LocationController");
+                this.hotZoneManager = new HotZoneManager(this.configManager!, locationController, logger);
+                this.hotZoneManager.initialize();
+                console.log("[LiveTarkovAI] ✓ Hot zone management enabled");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ LocationController not available - hot zone management disabled");
+                this.hotZoneManager = null;
+            }
             
-            // Initialize integration services
-            this.sainIntegration = new SainIntegrationService(this.configManager!, botModificationService, logger);
-            this.sainIntegration.initialize();
-            this.fikaIntegration = new FikaIntegrationService(this.configManager!, botController, logger);
-            this.fikaIntegration.initialize();
-            this.bushShootingService = new BushShootingService(this.configManager!, botModificationService, logger);
-            this.bushShootingService.initialize();
+            // Initialize integration services with available services
+            try {
+                const botModificationService = container.resolve<any>("BotModificationService");
+                this.sainIntegration = new SainIntegrationService(this.configManager!, botModificationService, logger);
+                this.sainIntegration.initialize();
+                console.log("[LiveTarkovAI] ✓ SAIN integration enabled");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ BotModificationService not available - SAIN integration disabled");
+                this.sainIntegration = null;
+            }
+            
+            try {
+                const botController = container.resolve<any>("BotController");
+                this.fikaIntegration = new FikaIntegrationService(this.configManager!, botController, logger);
+                this.fikaIntegration.initialize();
+                console.log("[LiveTarkovAI] ✓ Fika integration enabled");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ BotController not available - Fika integration disabled");
+                this.fikaIntegration = null;
+            }
+            
+            try {
+                const botModificationService = container.resolve<any>("BotModificationService");
+                this.bushShootingService = new BushShootingService(this.configManager!, botModificationService, logger);
+                this.bushShootingService.initialize();
+                console.log("[LiveTarkovAI] ✓ Bush shooting service enabled");
+            } catch (error) {
+                console.log("[LiveTarkovAI] ℹ️ BotModificationService not available - bush shooting service disabled");
+                this.bushShootingService = null;
+            }
             
             // Apply custom spawn configurations
             this.spawnManager.applyCustomSpawnConfig();
             
-            console.log("[LiveTarkovAI] Live Tarkov spawn data configuration completed!");
+            console.log("[LiveTarkovAI] Live Tark spawn data configuration completed!");
         } catch (error) {
             console.error(`[LiveTarkovAI] Error during postDBLoad: ${error}`);
         }
