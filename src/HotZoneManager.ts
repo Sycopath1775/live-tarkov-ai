@@ -1,263 +1,345 @@
 import { ConfigManager } from "./ConfigManager";
-
-export interface IHotZone {
-    enabled: boolean;
-    description: string;
-    spawnTypes: string[];
-    maxBots: number;
-    spawnChance: number;
-    spawnTiming: string;
-    priority: string;
-    coordinates: {
-        x: number;
-        y: number;
-        radius: number;
-    };
-    questRelated: boolean;
-    questName?: string;
-}
-
-export interface IHotZoneConfig {
-    enabled: boolean;
-    hotZones: Record<string, Record<string, IHotZone>>;
-    spawnDistribution: {
-        enabled: boolean;
-        minDistanceBetweenSpawns: number;
-        maxSpawnsPerZone: number;
-        zonePriority: Record<string, number>;
-        spawnTiming: {
-            initialSpawnDelay: number;
-            waveSpacing: number;
-            randomization: number;
-        };
-    };
-    integration: {
-        waypointsMod: boolean;
-        bigBrainMod: boolean;
-        useExistingPathfinding: boolean;
-        preventStuckBots: boolean;
-    };
-}
+import { LocationController, ILocationBase, Logger } from "./types/spt-types";
 
 export class HotZoneManager {
-    private hotZoneConfig: IHotZoneConfig;
-    private activeSpawns: Map<string, any[]> = new Map();
-    private spawnTimers: Map<string, NodeJS.Timeout> = new Map();
+    private configManager: ConfigManager;
+    private locationController: LocationController;
+    private logger: Logger;
+    private hotZoneConfig: any;
+    private activeHotZones: Map<string, any> = new Map();
 
-    constructor(private configManager: ConfigManager) {
-        this.loadHotZoneConfig();
+    constructor(configManager: ConfigManager, locationController: LocationController, logger: Logger) {
+        this.configManager = configManager;
+        this.locationController = locationController;
+        this.logger = logger;
     }
 
-    private loadHotZoneConfig(): void {
+    public initialize(): void {
         try {
+            this.logger.info("[LiveTarkovAI] Initializing HotZoneManager...");
+            
             // Load hot zone configuration
             this.hotZoneConfig = this.configManager.loadHotZoneConfig();
-            console.log("[HotZoneManager] Hot zone configuration loaded successfully");
+            
+            if (this.hotZoneConfig.enabled) {
+                this.setupHotZones();
+                this.logger.info("[LiveTarkovAI] HotZoneManager initialized successfully");
+            } else {
+                this.logger.info("[LiveTarkovAI] HotZoneManager disabled in configuration");
+            }
         } catch (error) {
-            console.error("[HotZoneManager] Error loading hot zone config:", error);
-            this.hotZoneConfig = this.getDefaultHotZoneConfig();
+            this.logger.error(`[LiveTarkovAI] Error initializing HotZoneManager: ${error}`);
         }
     }
 
-    private getDefaultHotZoneConfig(): IHotZoneConfig {
-        return {
-            enabled: true,
-            hotZones: {},
-            spawnDistribution: {
-                enabled: true,
-                minDistanceBetweenSpawns: 100,
-                maxSpawnsPerZone: 3,
-                zonePriority: { high: 1, medium: 2, low: 3 },
-                spawnTiming: {
-                    initialSpawnDelay: 30,
-                    waveSpacing: 300,
-                    randomization: 60
+    // Hook into location controller for spawn management
+    public hookIntoLocationController(locationController: any): void {
+        try {
+            if (!locationController || typeof locationController !== "object") return;
+            
+            // Store reference to location controller
+            this.locationController = locationController;
+            
+            // Hook into location spawn methods if they exist
+            if (locationController.getSpawnPoints && typeof locationController.getSpawnPoints === "function") {
+                const originalGetSpawnPoints = locationController.getSpawnPoints;
+                locationController.getSpawnPoints = (locationName: string) => {
+                    // Apply our hot zone modifications to spawn points
+                    const originalSpawnPoints = originalGetSpawnPoints.call(locationController, locationName);
+                    return this.modifySpawnPointsForHotZones(locationName, originalSpawnPoints);
+                };
+            }
+            
+            this.logger.info("[LiveTarkovAI] Successfully hooked into location controller");
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error hooking into location controller: ${error}`);
+        }
+    }
+
+    // Setup hot zones based on configuration
+    private setupHotZones(): void {
+        try {
+            const config = this.configManager.getConfig();
+            
+            // Create hot zones for each map
+            for (const [mapName, mapConfig] of Object.entries(config.mapSettings || {})) {
+                if (mapConfig && mapConfig.enabled) {
+                    this.createHotZonesForMap(mapName, mapConfig);
                 }
-            },
-            integration: {
-                waypointsMod: true,
-                bigBrainMod: true,
-                useExistingPathfinding: true,
-                preventStuckBots: true
             }
-        };
-    }
-
-    public initializeHotZones(mapName: string): void {
-        if (!this.hotZoneConfig.enabled) {
-            console.log("[HotZoneManager] Hot zones disabled");
-            return;
-        }
-
-        const mapHotZones = this.hotZoneConfig.hotZones[mapName];
-        if (!mapHotZones) {
-            console.log(`[HotZoneManager] No hot zones configured for map: ${mapName}`);
-            return;
-        }
-
-        console.log(`[HotZoneManager] Initializing hot zones for ${mapName}`);
-        
-        // Initialize spawn distribution
-        this.setupSpawnDistribution(mapName, mapHotZones);
-        
-        // Setup wave spawning
-        this.setupWaveSpawning(mapName, mapHotZones);
-    }
-
-    private setupSpawnDistribution(mapName: string, hotZones: Record<string, IHotZone>): void {
-        const { spawnDistribution } = this.hotZoneConfig;
-        
-        if (!spawnDistribution.enabled) return;
-
-        // Sort zones by priority
-        const sortedZones = Object.entries(hotZones)
-            .filter(([_, zone]) => zone.enabled)
-            .sort(([_, a], [__, b]) => 
-                spawnDistribution.zonePriority[a.priority] - spawnDistribution.zonePriority[b.priority]
-            );
-
-        // Calculate spawn positions with minimum distance
-        const spawnPositions: Array<{zone: string, position: {x: number, y: number}}> = [];
-        
-        for (const [zoneName, zone] of sortedZones) {
-            const positions = this.calculateSpawnPositions(
-                zone,
-                spawnPositions,
-                spawnDistribution.minDistanceBetweenSpawns
-            );
             
-            spawnPositions.push(...positions.map(pos => ({zone: zoneName, position: pos})));
+            this.logger.info(`[LiveTarkovAI] Created ${this.activeHotZones.size} hot zones`);
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error setting up hot zones: ${error}`);
         }
-
-        // Store spawn positions for this map
-        this.activeSpawns.set(mapName, spawnPositions);
-        
-        console.log(`[HotZoneManager] Calculated ${spawnPositions.length} spawn positions for ${mapName}`);
     }
 
-    private calculateSpawnPositions(
-        zone: IHotZone, 
-        existingPositions: Array<{zone: string, position: {x: number, y: number}}>,
-        minDistance: number
-    ): Array<{x: number, y: number}> {
-        const positions: Array<{x: number, y: number}> = [];
-        const maxAttempts = 50;
-        let attempts = 0;
-
-        while (positions.length < zone.maxBots && attempts < maxAttempts) {
-            attempts++;
+    // Create hot zones for a specific map
+    private createHotZonesForMap(mapName: string, mapConfig: any): void {
+        try {
+            const hotZones: any[] = [];
             
-            // Generate random position within zone radius
-            const angle = Math.random() * 2 * Math.PI;
-            const radius = Math.random() * zone.coordinates.radius;
-            const x = zone.coordinates.x + Math.cos(angle) * radius;
-            const y = zone.coordinates.y + Math.sin(angle) * radius;
-
-            // Check distance from existing positions
-            const tooClose = existingPositions.some(existing => {
-                const distance = Math.sqrt(
-                    Math.pow(x - existing.position.x, 2) + 
-                    Math.pow(y - existing.position.y, 2)
-                );
-                return distance < minDistance;
-            });
-
-            if (!tooClose) {
-                positions.push({x, y});
+            // Create boss zones
+            if (mapConfig.spawnPoints) {
+                for (const [spawnPointName, spawnPoint] of Object.entries(mapConfig.spawnPoints)) {
+                    if (spawnPoint && typeof spawnPoint === 'object' && 'enabled' in spawnPoint && spawnPoint.enabled) {
+                        if (spawnPointName.includes('boss') || spawnPointName.includes('Boss')) {
+                            hotZones.push({
+                                name: `${mapName}_${spawnPointName}`,
+                                type: 'boss',
+                                priority: spawnPoint.priority || 1,
+                                location: mapName,
+                                spawnPoint: spawnPointName,
+                                maxBots: spawnPoint.maxBots || 1,
+                                botTypes: spawnPoint.botTypes || [],
+                                excludeRegularScavs: true,
+                                minDistanceFromRegularSpawns: 80
+                            });
+                        }
+                    }
+                }
             }
-        }
-
-        return positions;
-    }
-
-    private setupWaveSpawning(mapName: string, hotZones: Record<string, IHotZone>): void {
-        const { spawnTiming } = this.hotZoneConfig.spawnDistribution;
-        
-        // Initial spawn delay
-        const initialDelay = spawnTiming.initialSpawnDelay + 
-            (Math.random() * spawnTiming.randomization);
-        
-        setTimeout(() => {
-            this.executeInitialSpawns(mapName, hotZones);
-        }, initialDelay * 1000);
-
-        // Setup wave spawning
-        this.setupWaveTimer(mapName, hotZones, spawnTiming.waveSpacing);
-    }
-
-    private executeInitialSpawns(mapName: string, hotZones: Record<string, IHotZone>): void {
-        console.log(`[HotZoneManager] Executing initial spawns for ${mapName}`);
-        
-        for (const [zoneName, zone] of Object.entries(hotZones)) {
-            if (!zone.enabled || Math.random() > zone.spawnChance) continue;
             
-            const spawnPositions = this.activeSpawns.get(mapName) || [];
-            const zonePositions = spawnPositions.filter(sp => sp.zone === zoneName);
+            // Create quest-related hot zones
+            this.createQuestHotZones(mapName, mapConfig, hotZones);
             
-            // Spawn bots at calculated positions
-            this.spawnBotsInZone(zone, zonePositions, mapName);
+            // Create high-traffic hot zones
+            this.createHighTrafficHotZones(mapName, mapConfig, hotZones);
+            
+            // Store hot zones for this map
+            if (hotZones.length > 0) {
+                this.activeHotZones.set(mapName, hotZones);
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error creating hot zones for map ${mapName}: ${error}`);
         }
     }
 
-    private setupWaveTimer(mapName: string, hotZones: Record<string, IHotZone>, waveSpacing: number): void {
-        const timer = setInterval(() => {
-            this.executeWaveSpawn(mapName, hotZones);
-        }, waveSpacing * 1000);
-
-        this.spawnTimers.set(mapName, timer);
-    }
-
-    private executeWaveSpawn(mapName: string, hotZones: Record<string, IHotZone>): void {
-        console.log(`[HotZoneManager] Executing wave spawn for ${mapName}`);
-        
-        // Implement wave spawning logic here
-        // This will be called periodically to spawn additional bots
-    }
-
-    private spawnBotsInZone(zone: IHotZone, positions: Array<{zone: string, position: {x: number, y: number}}>, mapName: string): void {
-        // This method will integrate with SPT's bot spawning system
-        // For now, we'll log the intended spawns
-        console.log(`[HotZoneManager] Would spawn ${positions.length} ${zone.spawnTypes.join(', ')} bots in zone`);
-        
-        // TODO: Integrate with SPT bot spawning
-        // This will require access to SPT's bot spawning services
-    }
-
-    public cleanupMap(mapName: string): void {
-        // Clear spawn timers
-        const timer = this.spawnTimers.get(mapName);
-        if (timer) {
-            clearInterval(timer);
-            this.spawnTimers.delete(mapName);
+    // Create quest-related hot zones
+    private createQuestHotZones(mapName: string, mapConfig: any, hotZones: any[]): void {
+        try {
+            // Define quest locations for each map
+            const questLocations: { [key: string]: any[] } = {
+                'bigmap': [
+                    { name: 'dorms', priority: 2, maxBots: 3, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'gas_station', priority: 2, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'construction', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'shoreline': [
+                    { name: 'resort', priority: 3, maxBots: 4, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'pier', priority: 2, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'gas_station', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'lighthouse': [
+                    { name: 'water_treatment', priority: 3, maxBots: 3, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'mountain', priority: 2, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'woods': [
+                    { name: 'sawmill', priority: 2, maxBots: 3, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'scav_house', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'reserve': [
+                    { name: 'bunker', priority: 3, maxBots: 4, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'heli_pad', priority: 2, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'streets': [
+                    { name: 'lexos', priority: 3, maxBots: 3, botTypes: ['assault', 'pmcbear'] },
+                    { name: 'chekannaya', priority: 2, maxBots: 2, botTypes: ['assault'] }
+                ]
+            };
+            
+            const mapQuestLocations = questLocations[mapName] || [];
+            
+            for (const questLocation of mapQuestLocations) {
+                hotZones.push({
+                    name: `${mapName}_${questLocation.name}`,
+                    type: 'quest',
+                    priority: questLocation.priority,
+                    location: mapName,
+                    spawnPoint: questLocation.name,
+                    maxBots: questLocation.maxBots,
+                    botTypes: questLocation.botTypes,
+                    excludeRegularScavs: false,
+                    minDistanceFromRegularSpawns: 50
+                });
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error creating quest hot zones for map ${mapName}: ${error}`);
         }
-
-        // Clear active spawns
-        this.activeSpawns.delete(mapName);
-        
-        console.log(`[HotZoneManager] Cleaned up hot zones for ${mapName}`);
     }
 
-    public getHotZoneInfo(mapName: string): any {
-        const mapHotZones = this.hotZoneConfig.hotZones[mapName];
-        if (!mapHotZones) return null;
-
-        return {
-            mapName,
-            totalZones: Object.keys(mapHotZones).length,
-            activeZones: Object.entries(mapHotZones)
-                .filter(([_, zone]) => zone.enabled)
-                .map(([name, zone]) => ({
-                    name,
-                    description: zone.description,
-                    priority: zone.priority,
-                    spawnTypes: zone.spawnTypes,
-                    maxBots: zone.maxBots
-                }))
-        };
+    // Create high-traffic hot zones
+    private createHighTrafficHotZones(mapName: string, mapConfig: any, hotZones: any[]): void {
+        try {
+            // Define high-traffic locations for each map
+            const highTrafficLocations: { [key: string]: any[] } = {
+                'bigmap': [
+                    { name: 'crossroads', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'old_gas', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'shoreline': [
+                    { name: 'village', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'power_station', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'lighthouse': [
+                    { name: 'village', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'rocks', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'woods': [
+                    { name: 'village', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'lumber_mill', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'reserve': [
+                    { name: 'village', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'garage', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ],
+                'streets': [
+                    { name: 'village', priority: 1, maxBots: 2, botTypes: ['assault'] },
+                    { name: 'garage', priority: 1, maxBots: 2, botTypes: ['assault'] }
+                ]
+            };
+            
+            const mapHighTrafficLocations = highTrafficLocations[mapName] || [];
+            
+            for (const highTrafficLocation of mapHighTrafficLocations) {
+                hotZones.push({
+                    name: `${mapName}_${highTrafficLocation.name}`,
+                    type: 'high_traffic',
+                    priority: highTrafficLocation.priority,
+                    location: mapName,
+                    spawnPoint: highTrafficLocation.name,
+                    maxBots: highTrafficLocation.maxBots,
+                    botTypes: highTrafficLocation.botTypes,
+                    excludeRegularScavs: false,
+                    minDistanceFromRegularSpawns: 30
+                });
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error creating high-traffic hot zones for map ${mapName}: ${error}`);
+        }
     }
 
-    public isHotZoneEnabled(mapName: string): boolean {
-        return this.hotZoneConfig.enabled && 
-               !!this.hotZoneConfig.hotZones[mapName];
+    // Modify spawn points based on hot zones
+    private modifySpawnPointsForHotZones(locationName: string, originalSpawnPoints: any[]): any[] {
+        try {
+            const hotZones = this.activeHotZones.get(locationName);
+            if (!hotZones || hotZones.length === 0) {
+                return originalSpawnPoints;
+            }
+            
+            const modifiedSpawnPoints = [...originalSpawnPoints];
+            
+            // Apply hot zone modifications
+            for (const hotZone of hotZones) {
+                this.applyHotZoneToSpawnPoints(hotZone, modifiedSpawnPoints);
+            }
+            
+            return modifiedSpawnPoints;
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error modifying spawn points for hot zones: ${error}`);
+            return originalSpawnPoints;
+        }
+    }
+
+    // Apply hot zone modifications to spawn points
+    private applyHotZoneToSpawnPoints(hotZone: any, spawnPoints: any[]): void {
+        try {
+            // Find spawn points near the hot zone
+            for (const spawnPoint of spawnPoints) {
+                if (this.isSpawnPointNearHotZone(spawnPoint, hotZone)) {
+                    // Apply hot zone modifications
+                    this.modifySpawnPointForHotZone(spawnPoint, hotZone);
+                }
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error applying hot zone to spawn points: ${error}`);
+        }
+    }
+
+    // Check if spawn point is near hot zone
+    private isSpawnPointNearHotZone(spawnPoint: any, hotZone: any): boolean {
+        try {
+            // Simple distance check - can be enhanced with actual coordinates
+            if (spawnPoint.name && hotZone.spawnPoint) {
+                return spawnPoint.name.toLowerCase().includes(hotZone.spawnPoint.toLowerCase()) ||
+                       hotZone.spawnPoint.toLowerCase().includes(spawnPoint.name.toLowerCase());
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Modify spawn point based on hot zone
+    private modifySpawnPointForHotZone(spawnPoint: any, hotZone: any): void {
+        try {
+            // Apply hot zone priority
+            if (hotZone.priority > (spawnPoint.priority || 1)) {
+                spawnPoint.priority = hotZone.priority;
+            }
+            
+            // Apply bot type restrictions
+            if (hotZone.botTypes && hotZone.botTypes.length > 0) {
+                if (!spawnPoint.botTypes) {
+                    spawnPoint.botTypes = [];
+                }
+                // Add hot zone bot types if not already present
+                for (const botType of hotZone.botTypes) {
+                    if (!spawnPoint.botTypes.includes(botType)) {
+                        spawnPoint.botTypes.push(botType);
+                    }
+                }
+            }
+            
+            // Apply exclusion rules
+            if (hotZone.excludeRegularScavs) {
+                spawnPoint.excludeRegularScavs = true;
+            }
+            
+            // Apply distance restrictions
+            if (hotZone.minDistanceFromRegularSpawns) {
+                spawnPoint.minDistanceFromRegularSpawns = hotZone.minDistanceFromRegularSpawns;
+            }
+            
+            // Mark spawn point as modified by hot zone
+            spawnPoint.hotZoneModified = true;
+            spawnPoint.hotZoneName = hotZone.name;
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error modifying spawn point for hot zone: ${error}`);
+        }
+    }
+
+    // Get hot zone information for a specific map
+    public getHotZonesForMap(mapName: string): any[] {
+        try {
+            return this.activeHotZones.get(mapName) || [];
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error getting hot zones for map ${mapName}: ${error}`);
+            return [];
+        }
+    }
+
+    // Get all active hot zones
+    public getAllHotZones(): Map<string, any[]> {
+        try {
+            return this.activeHotZones;
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error getting all hot zones: ${error}`);
+            return new Map();
+        }
+    }
+
+    // Update hot zone configuration
+    public updateHotZoneConfig(newConfig: any): void {
+        try {
+            this.hotZoneConfig = { ...this.hotZoneConfig, ...newConfig };
+            
+            if (this.hotZoneConfig.enabled) {
+                this.setupHotZones();
+                this.logger.info("[LiveTarkovAI] Hot zone configuration updated");
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error updating hot zone configuration: ${error}`);
+        }
     }
 }

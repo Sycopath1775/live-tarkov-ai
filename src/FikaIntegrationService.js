@@ -21,192 +21,302 @@ __export(FikaIntegrationService_exports, {
 });
 module.exports = __toCommonJS(FikaIntegrationService_exports);
 class FikaIntegrationService {
-  config;
-  isFikaActive = false;
-  fikaBotIds = /* @__PURE__ */ new Set();
-  constructor(config) {
-    this.config = config;
-    this.detectFikaMod();
+  configManager;
+  botController;
+  logger;
+  fikaConfig;
+  fikaAvailable = false;
+  fikaService = null;
+  constructor(configManager, botController, logger) {
+    this.configManager = configManager;
+    this.botController = botController;
+    this.logger = logger;
   }
-  /**
-   * Detect if Fika mod is active and initialize integration
-   */
-  detectFikaMod() {
+  initialize() {
     try {
-      const fikaMod = require("fika-server");
-      if (fikaMod) {
-        this.isFikaActive = true;
-        console.log("[Live Tarkov - AI] Fika mod detected - enabling integration");
-        this.initializeFikaIntegration();
+      this.logger.info("[LiveTarkovAI] Initializing Fika integration...");
+      this.fikaConfig = this.configManager.getFikaIntegrationConfig();
+      if (this.fikaConfig.enabled) {
+        this.checkFikaAvailability();
+        if (this.fikaAvailable) {
+          this.setupFikaIntegration();
+          this.logger.info("[LiveTarkovAI] Fika integration initialized successfully");
+        } else {
+          this.logger.info("[LiveTarkovAI] Fika not available - integration disabled");
+        }
+      } else {
+        this.logger.info("[LiveTarkovAI] Fika integration disabled in configuration");
       }
     } catch (error) {
-      console.log("[Live Tarkov - AI] Fika mod not detected - running in single player mode");
-      this.isFikaActive = false;
+      this.logger.error(`[LiveTarkovAI] Error initializing Fika integration: ${error}`);
     }
   }
-  /**
-   * Initialize Fika integration features
-   */
-  initializeFikaIntegration() {
-    if (!this.config.enabled || !this.isFikaActive) return;
+  // Check if Fika mod is available
+  checkFikaAvailability() {
     try {
-      this.hookIntoFikaBotSystem();
-      if (this.config.botBrainOptimization) {
+      try {
+        this.fikaService = require("fika-server");
+        this.fikaAvailable = true;
+        return;
+      } catch (error) {
+      }
+      if (globalThis.FikaService || globalThis.FikaServerService || globalThis.fika) {
+        this.fikaService = globalThis.FikaService || globalThis.FikaServerService || globalThis.fika;
+        this.fikaAvailable = true;
+        return;
+      }
+      try {
+        if (globalThis.SPT_CONTAINER) {
+          const container = globalThis.SPT_CONTAINER;
+          if (container.resolve && container.resolve("FikaService")) {
+            this.fikaService = container.resolve("FikaService");
+            this.fikaAvailable = true;
+            return;
+          }
+        }
+      } catch (error) {
+      }
+      this.fikaAvailable = false;
+    } catch (error) {
+      this.fikaAvailable = false;
+    }
+  }
+  // Setup Fika integration
+  setupFikaIntegration() {
+    try {
+      if (!this.fikaService) return;
+      this.applyFikaIntegrationFeatures();
+      this.hookIntoFikaServices();
+      this.logger.info("[LiveTarkovAI] Fika integration setup completed");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up Fika integration: ${error}`);
+    }
+  }
+  // Apply Fika integration features
+  applyFikaIntegrationFeatures() {
+    try {
+      if (this.fikaConfig.multiplayerCompatibility) {
+        this.setupMultiplayerCompatibility();
+      }
+      if (this.fikaConfig.playerScavHandling) {
+        this.setupPlayerScavHandling();
+      }
+      if (this.fikaConfig.botBrainOptimization) {
         this.setupBotBrainOptimization();
       }
-      if (this.config.preventBotConflicts) {
-        this.setupConflictPrevention();
+      if (this.fikaConfig.preventBotConflicts) {
+        this.setupBotConflictPrevention();
       }
-      console.log("[Live Tarkov - AI] Fika integration initialized successfully");
+      this.logger.info("[LiveTarkovAI] Fika integration features applied");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error initializing Fika integration:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying Fika integration features: ${error}`);
     }
   }
-  /**
-   * Hook into Fika's bot management system
-   */
-  hookIntoFikaBotSystem() {
+  // Setup multiplayer compatibility
+  setupMultiplayerCompatibility() {
     try {
-      this.setupFikaBotListeners();
-      if (this.config.syncWithFikaBots) {
-        this.setupBotStateSync();
-      }
+      if (!this.fikaService || !this.fikaService.setupMultiplayerCompatibility) return;
+      this.fikaService.setupMultiplayerCompatibility({
+        syncBotStates: true,
+        preventDesync: true,
+        handleMultiplePlayers: true
+      });
+      this.logger.info("[LiveTarkovAI] Multiplayer compatibility configured with Fika");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error hooking into Fika bot system:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up multiplayer compatibility: ${error}`);
     }
   }
-  /**
-   * Set up listeners for Fika bot events
-   */
-  setupFikaBotListeners() {
+  // Setup player scav handling
+  setupPlayerScavHandling() {
     try {
-      console.log("[Live Tarkov - AI] Fika bot listeners configured");
+      if (!this.fikaService || !this.fikaService.setupPlayerScavHandling) return;
+      this.fikaService.setupPlayerScavHandling({
+        preventBotConflicts: true,
+        syncPlayerScavStates: true,
+        handlePlayerScavSpawns: true
+      });
+      this.logger.info("[LiveTarkovAI] Player scav handling configured with Fika");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up Fika bot listeners:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up player scav handling: ${error}`);
     }
   }
-  /**
-   * Set up bot state synchronization
-   */
-  setupBotStateSync() {
-    try {
-      console.log("[Live Tarkov - AI] Bot state synchronization configured");
-    } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up bot state sync:", error);
-    }
-  }
-  /**
-   * Set up bot brain optimization
-   */
+  // Setup bot brain optimization
   setupBotBrainOptimization() {
     try {
-      console.log("[Live Tarkov - AI] Bot brain optimization configured");
+      if (!this.fikaService || !this.fikaService.setupBotBrainOptimization) return;
+      this.fikaService.setupBotBrainOptimization({
+        optimizePathfinding: true,
+        reduceCPUUsage: true,
+        improveBotIntelligence: true
+      });
+      this.logger.info("[LiveTarkovAI] Bot brain optimization configured with Fika");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up bot brain optimization:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bot brain optimization: ${error}`);
     }
   }
-  /**
-   * Set up conflict prevention
-   */
-  setupConflictPrevention() {
+  // Setup bot conflict prevention
+  setupBotConflictPrevention() {
     try {
-      console.log("[Live Tarkov - AI] Conflict prevention configured");
+      if (!this.fikaService || !this.fikaService.setupBotConflictPrevention) return;
+      this.fikaService.setupBotConflictPrevention({
+        preventDuplicateSpawns: true,
+        handleBotCollisions: true,
+        manageBotTerritories: true
+      });
+      this.logger.info("[LiveTarkovAI] Bot conflict prevention configured with Fika");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up conflict prevention:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bot conflict prevention: ${error}`);
     }
   }
-  /**
-   * Investigate Fika item desync errors
-   */
-  investigateItemDesync() {
-    if (!this.isFikaActive) {
-      console.log("[Live Tarkov - AI] Fika not active, skipping item desync investigation");
-      return;
-    }
+  // Hook into Fika services
+  hookIntoFikaServices() {
     try {
-      console.log("[Live Tarkov - AI] Investigating Fika item desync errors...");
-      this.checkItemConflicts();
-      this.monitorFikaItemHandling();
-      console.log("[Live Tarkov - AI] Item desync investigation completed");
+      if (!this.fikaService) return;
+      if (this.fikaService.botController) {
+        this.hookIntoFikaBotController(this.fikaService.botController);
+      }
+      if (this.fikaService.spawnService) {
+        this.hookIntoFikaSpawnService(this.fikaService.spawnService);
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into Fika services");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error investigating item desync:", error);
+      this.logger.error(`[LiveTarkovAI] Error hooking into Fika services: ${error}`);
     }
   }
-  /**
-   * Check for potential item conflicts
-   */
-  checkItemConflicts() {
+  // Hook into Fika bot controller
+  hookIntoFikaBotController(fikaBotController) {
     try {
-      console.log("[Live Tarkov - AI] Checking for item conflicts...");
-      console.log("[Live Tarkov - AI] No obvious item conflicts detected");
+      if (!fikaBotController || typeof fikaBotController !== "object") return;
+      this.botController = fikaBotController;
+      if (fikaBotController.getBots && typeof fikaBotController.getBots === "function") {
+        const originalGetBots = fikaBotController.getBots;
+        fikaBotController.getBots = () => {
+          const bots = originalGetBots.call(fikaBotController);
+          this.applyCustomBotModifications(bots);
+          return bots;
+        };
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into Fika bot controller");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error checking item conflicts:", error);
+      this.logger.error(`[LiveTarkovAI] Error hooking into Fika bot controller: ${error}`);
     }
   }
-  /**
-   * Monitor Fika's item handling
-   */
-  monitorFikaItemHandling() {
+  // Hook into Fika spawn service
+  hookIntoFikaSpawnService(fikaSpawnService) {
     try {
-      console.log("[Live Tarkov - AI] Monitoring Fika item handling...");
-      console.log("[Live Tarkov - AI] Fika item monitoring configured");
+      if (!fikaSpawnService || typeof fikaSpawnService !== "object") return;
+      if (fikaSpawnService.spawnBot && typeof fikaSpawnService.spawnBot === "function") {
+        const originalSpawnBot = fikaSpawnService.spawnBot;
+        fikaSpawnService.spawnBot = async (botType, location, count) => {
+          const modifiedCount = this.calculateCustomBotCount(botType, location, count);
+          const modifiedBotType = this.getModifiedBotType(botType);
+          return await originalSpawnBot.call(fikaSpawnService, modifiedBotType, location, modifiedCount);
+        };
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into Fika spawn service");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up item monitoring:", error);
+      this.logger.error(`[LiveTarkovAI] Error hooking into Fika spawn service: ${error}`);
     }
   }
-  /**
-   * Handle player scav bot creation
-   */
-  handlePlayerScavBot(botId, botData) {
-    if (!this.config.playerScavHandling || !this.isFikaActive) return;
+  // Apply custom bot modifications
+  applyCustomBotModifications(bots) {
     try {
-      this.fikaBotIds.add(botId);
-      this.applyPlayerScavOptimizations(botId, botData);
-      console.log(`[Live Tarkov - AI] Player scav bot ${botId} handled for Fika integration`);
-    } catch (error) {
-      console.error(`[Live Tarkov - AI] Error handling player scav bot ${botId}:`, error);
-    }
-  }
-  /**
-   * Apply optimizations for player scav bots
-   */
-  applyPlayerScavOptimizations(botId, botData) {
-    try {
-      if (botData && botData.brain) {
-        botData.brain = "pmcBot";
-        console.log(`[Live Tarkov - AI] Updated player scav bot ${botId} to use: pmcBot brain`);
+      if (!Array.isArray(bots)) return;
+      for (const bot of bots) {
+        const config = this.configManager.getConfig();
+        const botTypeConfig = config.botTypeSettings[bot.Role];
+        if (botTypeConfig && botTypeConfig.enabled) {
+          if (botTypeConfig.gearRestrictions) {
+            this.applyGearRestrictions(bot, botTypeConfig.gearRestrictions);
+          }
+          if (botTypeConfig.liveTarkovBehavior) {
+            this.applyBehaviorModifications(bot, botTypeConfig.liveTarkovBehavior);
+          }
+        }
       }
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error applying player scav optimizations for ${botId}:`, error);
+      this.logger.error(`[LiveTarkovAI] Error applying custom bot modifications: ${error}`);
     }
   }
-  /**
-   * Check if a bot is managed by Fika
-   */
-  isFikaBot(botId) {
-    return this.fikaBotIds.has(botId);
-  }
-  /**
-   * Get integration status
-   */
-  getIntegrationStatus() {
-    if (!this.isFikaActive) {
-      return "Fika not detected - running in single player mode";
-    }
-    if (!this.config.enabled) {
-      return "Fika detected but integration disabled";
-    }
-    return "Fika integration active and configured";
-  }
-  /**
-   * Clean up Fika integration
-   */
-  cleanup() {
+  // Apply gear restrictions to bot
+  applyGearRestrictions(bot, gearRestrictions) {
     try {
-      this.fikaBotIds.clear();
-      console.log("[Live Tarkov - AI] Fika integration cleaned up");
+      if (gearRestrictions.weapons && gearRestrictions.weapons.length > 0) {
+        bot.weaponRestrictions = gearRestrictions.weapons;
+      }
+      if (gearRestrictions.armor && gearRestrictions.armor.length > 0) {
+        bot.armorRestrictions = gearRestrictions.armor;
+      }
+      if (gearRestrictions.items && gearRestrictions.items.length > 0) {
+        bot.itemRestrictions = gearRestrictions.items;
+      }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error cleaning up Fika integration:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying gear restrictions: ${error}`);
+    }
+  }
+  // Apply behavior modifications to bot
+  applyBehaviorModifications(bot, behavior) {
+    try {
+      if (behavior.accuracy !== void 0) {
+        bot.accuracy = behavior.accuracy;
+      }
+      if (behavior.reactionTime !== void 0) {
+        bot.reactionTime = behavior.reactionTime;
+      }
+      if (behavior.aggression !== void 0) {
+        bot.aggression = behavior.aggression;
+      }
+      if (behavior.hearing !== void 0) {
+        bot.hearing = behavior.hearing;
+      }
+      if (behavior.vision !== void 0) {
+        bot.vision = behavior.vision;
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error applying behavior modifications: ${error}`);
+    }
+  }
+  // Calculate custom bot count based on configuration
+  calculateCustomBotCount(botType, location, originalCount) {
+    try {
+      const config = this.configManager.getConfig();
+      const mapConfig = config.mapSettings[location];
+      if (!mapConfig || !mapConfig.enabled) return originalCount;
+      const botTypeConfig = mapConfig.botTypes[botType];
+      if (!botTypeConfig || !botTypeConfig.enabled) return 0;
+      return Math.min(botTypeConfig.maxCount, originalCount);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error calculating custom bot count: ${error}`);
+      return originalCount;
+    }
+  }
+  // Get modified bot type based on configuration
+  getModifiedBotType(originalBotType) {
+    try {
+      return originalBotType;
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error getting modified bot type: ${error}`);
+      return originalBotType;
+    }
+  }
+  // Check if Fika integration is available
+  isFikaAvailable() {
+    return this.fikaAvailable;
+  }
+  // Get Fika configuration
+  getFikaConfig() {
+    return this.fikaConfig;
+  }
+  // Update Fika configuration
+  updateFikaConfig(newConfig) {
+    try {
+      this.fikaConfig = { ...this.fikaConfig, ...newConfig };
+      if (this.fikaConfig.enabled && this.fikaAvailable) {
+        this.setupFikaIntegration();
+        this.logger.info("[LiveTarkovAI] Fika configuration updated");
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error updating Fika configuration: ${error}`);
     }
   }
 }

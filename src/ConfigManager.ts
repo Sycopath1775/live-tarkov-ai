@@ -9,6 +9,19 @@ export interface ISpawnConfig {
         bossSpawnChance: number;
         raiderSpawnChance: number;
         rogueSpawnChance: number;
+        gearProgression?: {
+            enabled: boolean;
+            enforceMetaAmmo: boolean;
+            levelBasedScaling: boolean;
+            minLevelForHighTier: number;
+            maxLevelForLowTier: number;
+            metaAmmoTypes: string[];
+            highTierArmor: string[];
+            metaWeapons: string[];
+            progressionTiers: {
+                [key: string]: string;
+            };
+        };
     };
     mapSettings: {
         [mapName: string]: {

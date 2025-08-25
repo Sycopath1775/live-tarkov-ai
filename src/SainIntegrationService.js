@@ -21,264 +21,315 @@ __export(SainIntegrationService_exports, {
 });
 module.exports = __toCommonJS(SainIntegrationService_exports);
 class SainIntegrationService {
-  config;
-  isSainActive = false;
-  sainBotIds = /* @__PURE__ */ new Set();
-  behaviorOverrides = /* @__PURE__ */ new Map();
-  constructor(config) {
-    this.config = config;
-    this.detectSainMod();
+  configManager;
+  botModificationService;
+  logger;
+  sainConfig;
+  sainAvailable = false;
+  sainService = null;
+  constructor(configManager, botModificationService, logger) {
+    this.configManager = configManager;
+    this.botModificationService = botModificationService;
+    this.logger = logger;
   }
-  /**
-   * Detect if SAIN mod is active and initialize integration
-   */
-  detectSainMod() {
+  initialize() {
     try {
-      const sainMod = require("zSolarint-SAIN-ServerMod");
-      if (sainMod) {
-        this.isSainActive = true;
-        console.log("[Live Tarkov - AI] SAIN mod detected - enabling integration");
-        this.initializeSainIntegration();
+      this.logger.info("[LiveTarkovAI] Initializing SAIN integration...");
+      this.sainConfig = this.configManager.getSainIntegrationConfig();
+      if (this.sainConfig.enabled) {
+        this.checkSAINAvailability();
+        if (this.sainAvailable) {
+          this.setupSAINIntegration();
+          this.logger.info("[LiveTarkovAI] SAIN integration initialized successfully");
+        } else {
+          this.logger.info("[LiveTarkovAI] SAIN not available - integration disabled");
+        }
+      } else {
+        this.logger.info("[LiveTarkovAI] SAIN integration disabled in configuration");
       }
     } catch (error) {
-      console.log("[Live Tarkov - AI] SAIN mod not detected - running without SAIN integration");
-      this.isSainActive = false;
+      this.logger.error(`[LiveTarkovAI] Error initializing SAIN integration: ${error}`);
     }
   }
-  /**
-   * Initialize SAIN integration features
-   */
-  initializeSainIntegration() {
-    if (!this.config.enabled || !this.isSainActive) return;
+  // Check if SAIN mod is available
+  checkSAINAvailability() {
     try {
-      this.hookIntoSainBotSystem();
-      if (this.config.syncBotBehavior) {
-        this.setupBehaviorSynchronization();
+      try {
+        this.sainService = require("zSolarint-SAIN-ServerMod");
+        this.sainAvailable = true;
+        return;
+      } catch (error) {
       }
-      if (this.config.enhancedPathfinding) {
-        this.setupEnhancedPathfinding();
+      if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
+        this.sainService = globalThis.SAIN || globalThis.SainService || globalThis.sain;
+        this.sainAvailable = true;
+        return;
       }
-      if (this.config.tacticalMovement) {
-        this.setupTacticalMovement();
+      try {
+        if (globalThis.SPT_CONTAINER) {
+          const container = globalThis.SPT_CONTAINER;
+          if (container.resolve && container.resolve("SAINService")) {
+            this.sainService = container.resolve("SAINService");
+            this.sainAvailable = true;
+            return;
+          }
+        }
+      } catch (error) {
       }
-      console.log("[Live Tarkov - AI] SAIN integration initialized successfully");
+      this.sainAvailable = false;
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error initializing SAIN integration:", error);
+      this.sainAvailable = false;
     }
   }
-  /**
-   * Hook into SAIN's bot management system
-   */
-  hookIntoSainBotSystem() {
+  // Setup SAIN integration
+  setupSAINIntegration() {
     try {
-      this.setupSainBotListeners();
-      this.setupBotStateSync();
+      if (!this.sainService) return;
+      this.applySAINBehaviorModifications();
+      this.hookIntoSAINServices();
+      this.logger.info("[LiveTarkovAI] SAIN integration setup completed");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error hooking into SAIN bot system:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up SAIN integration: ${error}`);
     }
   }
-  /**
-   * Set up listeners for SAIN bot events
-   */
-  setupSainBotListeners() {
+  // Apply SAIN behavior modifications
+  applySAINBehaviorModifications() {
     try {
-      console.log("[Live Tarkov - AI] SAIN bot listeners configured");
+      const config = this.configManager.getConfig();
+      if (this.sainConfig.scavBehavior) {
+        this.applyScavBehaviorModifications();
+      }
+      if (this.sainConfig.pmcBehavior) {
+        this.applyPMCBehaviorModifications();
+      }
+      if (this.sainConfig.bossBehavior) {
+        this.applyBossBehaviorModifications();
+      }
+      this.logger.info("[LiveTarkovAI] SAIN behavior modifications applied");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up SAIN bot listeners:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying SAIN behavior modifications: ${error}`);
     }
   }
-  /**
-   * Set up bot state synchronization
-   */
-  setupBotStateSync() {
+  // Apply scav behavior modifications
+  applyScavBehaviorModifications() {
     try {
-      console.log("[Live Tarkov - AI] Bot state sync configured with SAIN");
-    } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up bot state sync:", error);
-    }
-  }
-  /**
-   * Set up behavior synchronization
-   */
-  setupBehaviorSynchronization() {
-    try {
-      this.setupScavBehaviorSync();
-      this.setupPmcBehaviorSync();
-      this.setupBossBehaviorSync();
-      console.log("[Live Tarkov - AI] Behavior synchronization configured with SAIN");
-    } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up behavior synchronization:", error);
-    }
-  }
-  /**
-   * Set up scav behavior synchronization
-   */
-  setupScavBehaviorSync() {
-    try {
-      if (this.config.scavBehavior.annoyingButNotDeadly) {
-        this.configureScavBehavior();
+      const scavBehavior = this.sainConfig.scavBehavior;
+      if (scavBehavior.annoyingButNotDeadly) {
+        this.modifyScavBehavior("annoying_but_not_deadly", {
+          accuracy: scavBehavior.reducedAccuracy || 0.4,
+          avoidHeadshots: scavBehavior.avoidHeadshots || true,
+          preventStomachBlacking: scavBehavior.preventStomachBlacking || true
+        });
       }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up scav behavior sync:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying scav behavior modifications: ${error}`);
     }
   }
-  /**
-   * Set up PMC behavior synchronization
-   */
-  setupPmcBehaviorSync() {
+  // Apply PMC behavior modifications
+  applyPMCBehaviorModifications() {
     try {
-      if (this.config.pmcBehavior.tacticalAndTough) {
-        this.configurePmcBehavior();
+      const pmcBehavior = this.sainConfig.pmcBehavior;
+      if (pmcBehavior.tacticalAndTough) {
+        this.modifyPMCBehavior("tactical_and_tough", {
+          accuracy: pmcBehavior.realisticAccuracy || 0.75,
+          avoidInstaKills: pmcBehavior.avoidInstaKills || true,
+          properGearUsage: pmcBehavior.properGearUsage || true
+        });
       }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up PMC behavior sync:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying PMC behavior modifications: ${error}`);
     }
   }
-  /**
-   * Set up boss behavior synchronization
-   */
-  setupBossBehaviorSync() {
+  // Apply boss behavior modifications
+  applyBossBehaviorModifications() {
     try {
-      if (this.config.bossBehavior.toughButNotInstaKill) {
-        this.configureBossBehavior();
+      const bossBehavior = this.sainConfig.bossBehavior;
+      if (bossBehavior.toughButNotInstaKill) {
+        this.modifyBossBehavior("tough_but_not_insta_kill", {
+          avoidHeadshotSpam: bossBehavior.avoidHeadshotSpam || true,
+          realisticDifficulty: bossBehavior.realisticDifficulty || true,
+          properMechanics: bossBehavior.properMechanics || true
+        });
       }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up boss behavior sync:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying boss behavior modifications: ${error}`);
     }
   }
-  /**
-   * Configure scav behavior for SAIN integration
-   */
-  configureScavBehavior() {
+  // Modify scav behavior using SAIN
+  modifyScavBehavior(behaviorType, modifications) {
     try {
-      const scavOverrides = {
-        accuracy: this.config.scavBehavior.reducedAccuracy,
-        avoidHeadshots: this.config.scavBehavior.avoidHeadshots,
-        preventStomachBlacking: this.config.scavBehavior.preventStomachBlacking,
-        behavior: "annoying"
-      };
-      this.behaviorOverrides.set("scav", scavOverrides);
-      console.log("[Live Tarkov - AI] Scav behavior configured for SAIN integration");
+      if (!this.sainService || !this.sainService.modifyScavBehavior) return;
+      this.sainService.modifyScavBehavior(behaviorType, modifications);
+      this.logger.info(`[LiveTarkovAI] Applied ${behaviorType} scav behavior through SAIN`);
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error configuring scav behavior:", error);
+      this.logger.error(`[LiveTarkovAI] Error modifying scav behavior through SAIN: ${error}`);
     }
   }
-  /**
-   * Configure PMC behavior for SAIN integration
-   */
-  configurePmcBehavior() {
+  // Modify PMC behavior using SAIN
+  modifyPMCBehavior(behaviorType, modifications) {
     try {
-      const pmcOverrides = {
-        accuracy: this.config.pmcBehavior.realisticAccuracy,
-        avoidInstaKills: this.config.pmcBehavior.avoidInstaKills,
-        properGearUsage: this.config.pmcBehavior.properGearUsage,
-        behavior: "tactical"
-      };
-      this.behaviorOverrides.set("pmc", pmcOverrides);
-      console.log("[Live Tarkov - AI] PMC behavior configured for SAIN integration");
+      if (!this.sainService || !this.sainService.modifyPMCBehavior) return;
+      this.sainService.modifyPMCBehavior(behaviorType, modifications);
+      this.logger.info(`[LiveTarkovAI] Applied ${behaviorType} PMC behavior through SAIN`);
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error configuring PMC behavior:", error);
+      this.logger.error(`[LiveTarkovAI] Error modifying PMC behavior through SAIN: ${error}`);
     }
   }
-  /**
-   * Configure boss behavior for SAIN integration
-   */
-  configureBossBehavior() {
+  // Modify boss behavior using SAIN
+  modifyBossBehavior(behaviorType, modifications) {
     try {
-      const bossOverrides = {
-        avoidHeadshotSpam: this.config.bossBehavior.avoidHeadshotSpam,
-        realisticDifficulty: this.config.bossBehavior.realisticDifficulty,
-        properMechanics: this.config.bossBehavior.properMechanics,
-        behavior: "boss"
-      };
-      this.behaviorOverrides.set("boss", bossOverrides);
-      console.log("[Live Tarkov - AI] Boss behavior configured for SAIN integration");
+      if (!this.sainService || !this.sainService.modifyBossBehavior) return;
+      this.sainService.modifyBossBehavior(behaviorType, modifications);
+      this.logger.info(`[LiveTarkovAI] Applied ${behaviorType} boss behavior through SAIN`);
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error configuring boss behavior:", error);
+      this.logger.error(`[LiveTarkovAI] Error modifying boss behavior through SAIN: ${error}`);
     }
   }
-  /**
-   * Set up enhanced pathfinding
-   */
-  setupEnhancedPathfinding() {
+  // Hook into SAIN services
+  hookIntoSAINServices() {
     try {
-      console.log("[Live Tarkov - AI] Enhanced pathfinding configured with SAIN");
+      if (!this.sainService) return;
+      if (this.sainService.botModificationService) {
+        this.hookIntoSAINBotModification(this.sainService.botModificationService);
+      }
+      if (this.sainService.spawnService) {
+        this.hookIntoSAINSpawnService(this.sainService.spawnService);
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into SAIN services");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up enhanced pathfinding:", error);
+      this.logger.error(`[LiveTarkovAI] Error hooking into SAIN services: ${error}`);
     }
   }
-  /**
-   * Set up tactical movement
-   */
-  setupTacticalMovement() {
+  // Hook into SAIN bot modification service
+  hookIntoSAINBotModification(sainBotModService) {
     try {
-      console.log("[Live Tarkov - AI] Tactical movement configured with SAIN");
+      if (!sainBotModService || typeof sainBotModService !== "object") return;
+      this.botModificationService = sainBotModService;
+      if (sainBotModService.modifyBot && typeof sainBotModService.modifyBot === "function") {
+        const originalModifyBot = sainBotModService.modifyBot;
+        sainBotModService.modifyBot = (bot, modifications) => {
+          this.applyCustomBotModifications(bot, modifications);
+          return originalModifyBot.call(sainBotModService, bot, modifications);
+        };
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into SAIN bot modification service");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up tactical movement:", error);
+      this.logger.error(`[LiveTarkovAI] Error hooking into SAIN bot modification service: ${error}`);
     }
   }
-  /**
-   * Apply behavior overrides to a bot
-   */
-  applyBehaviorOverrides(botId, botType, botData) {
-    if (!this.config.enabled || !this.isSainActive) return;
+  // Hook into SAIN spawn service
+  hookIntoSAINSpawnService(sainSpawnService) {
     try {
-      const overrides = this.behaviorOverrides.get(botType);
-      if (overrides) {
-        this.applyOverridesToBot(botId, botData, overrides);
-        console.log(`[Live Tarkov - AI] Applied SAIN behavior overrides to bot ${botId}`);
+      if (!sainSpawnService || typeof sainSpawnService !== "object") return;
+      if (sainSpawnService.spawnBot && typeof sainSpawnService.spawnBot === "function") {
+        const originalSpawnBot = sainSpawnService.spawnBot;
+        sainSpawnService.spawnBot = async (botType, location, count) => {
+          const modifiedCount = this.calculateCustomBotCount(botType, location, count);
+          const modifiedBotType = this.getModifiedBotType(botType);
+          return await originalSpawnBot.call(sainSpawnService, modifiedBotType, location, modifiedCount);
+        };
+      }
+      this.logger.info("[LiveTarkovAI] Successfully hooked into SAIN spawn service");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error hooking into SAIN spawn service: ${error}`);
+    }
+  }
+  // Apply custom bot modifications
+  applyCustomBotModifications(bot, modifications) {
+    try {
+      const config = this.configManager.getConfig();
+      const botTypeConfig = config.botTypeSettings[bot.Role];
+      if (botTypeConfig && botTypeConfig.enabled) {
+        if (botTypeConfig.gearRestrictions) {
+          this.applyGearRestrictions(bot, botTypeConfig.gearRestrictions);
+        }
+        if (botTypeConfig.liveTarkovBehavior) {
+          this.applyBehaviorModifications(bot, botTypeConfig.liveTarkovBehavior);
+        }
       }
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error applying behavior overrides to bot ${botId}:`, error);
+      this.logger.error(`[LiveTarkovAI] Error applying custom bot modifications: ${error}`);
     }
   }
-  /**
-   * Apply overrides to a bot
-   */
-  applyOverridesToBot(botId, botData, overrides) {
+  // Apply gear restrictions to bot
+  applyGearRestrictions(bot, gearRestrictions) {
     try {
-      if (overrides.accuracy !== void 0) {
-        botData.accuracy = overrides.accuracy;
+      if (gearRestrictions.weapons && gearRestrictions.weapons.length > 0) {
+        bot.weaponRestrictions = gearRestrictions.weapons;
       }
-      if (overrides.behavior) {
-        botData.behaviorType = overrides.behavior;
+      if (gearRestrictions.armor && gearRestrictions.armor.length > 0) {
+        bot.armorRestrictions = gearRestrictions.armor;
       }
-      this.sainBotIds.add(botId);
+      if (gearRestrictions.items && gearRestrictions.items.length > 0) {
+        bot.itemRestrictions = gearRestrictions.items;
+      }
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error applying overrides to bot ${botId}:`, error);
+      this.logger.error(`[LiveTarkovAI] Error applying gear restrictions: ${error}`);
     }
   }
-  /**
-   * Check if a bot is managed by SAIN
-   */
-  isSainBot(botId) {
-    return this.sainBotIds.has(botId);
-  }
-  /**
-   * Get SAIN integration status
-   */
-  getIntegrationStatus() {
-    return {
-      enabled: this.config.enabled,
-      sainActive: this.isSainActive,
-      useSainBotBrains: this.config.useSainBotBrains,
-      syncBotBehavior: this.config.syncBotBehavior,
-      enhancedPathfinding: this.config.enhancedPathfinding,
-      tacticalMovement: this.config.tacticalMovement,
-      managedBotCount: this.sainBotIds.size,
-      behaviorOverrides: this.behaviorOverrides.size
-    };
-  }
-  /**
-   * Clean up SAIN integration
-   */
-  cleanup() {
+  // Apply behavior modifications to bot
+  applyBehaviorModifications(bot, behavior) {
     try {
-      this.sainBotIds.clear();
-      this.behaviorOverrides.clear();
-      console.log("[Live Tarkov - AI] SAIN integration cleaned up");
+      if (behavior.accuracy !== void 0) {
+        bot.accuracy = behavior.accuracy;
+      }
+      if (behavior.reactionTime !== void 0) {
+        bot.reactionTime = behavior.reactionTime;
+      }
+      if (behavior.aggression !== void 0) {
+        bot.aggression = behavior.aggression;
+      }
+      if (behavior.hearing !== void 0) {
+        bot.hearing = behavior.hearing;
+      }
+      if (behavior.vision !== void 0) {
+        bot.vision = behavior.vision;
+      }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error cleaning up SAIN integration:", error);
+      this.logger.error(`[LiveTarkovAI] Error applying behavior modifications: ${error}`);
+    }
+  }
+  // Calculate custom bot count based on configuration
+  calculateCustomBotCount(botType, location, originalCount) {
+    try {
+      const config = this.configManager.getConfig();
+      const mapConfig = config.mapSettings[location];
+      if (!mapConfig || !mapConfig.enabled) return originalCount;
+      const botTypeConfig = mapConfig.botTypes[botType];
+      if (!botTypeConfig || !botTypeConfig.enabled) return 0;
+      return Math.min(botTypeConfig.maxCount, originalCount);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error calculating custom bot count: ${error}`);
+      return originalCount;
+    }
+  }
+  // Get modified bot type based on configuration
+  getModifiedBotType(originalBotType) {
+    try {
+      return originalBotType;
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error getting modified bot type: ${error}`);
+      return originalBotType;
+    }
+  }
+  // Check if SAIN integration is available
+  isSAINAvailable() {
+    return this.sainAvailable;
+  }
+  // Get SAIN configuration
+  getSAINConfig() {
+    return this.sainConfig;
+  }
+  // Update SAIN configuration
+  updateSAINConfig(newConfig) {
+    try {
+      this.sainConfig = { ...this.sainConfig, ...newConfig };
+      if (this.sainConfig.enabled && this.sainAvailable) {
+        this.setupSAINIntegration();
+        this.logger.info("[LiveTarkovAI] SAIN configuration updated");
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error updating SAIN configuration: ${error}`);
     }
   }
 }

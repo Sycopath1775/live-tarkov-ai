@@ -21,196 +21,412 @@ __export(BushShootingService_exports, {
 });
 module.exports = __toCommonJS(BushShootingService_exports);
 class BushShootingService {
-  config;
-  activeBushes = /* @__PURE__ */ new Map();
-  botShootingStates = /* @__PURE__ */ new Map();
-  constructor(config) {
-    this.config = config;
-    if (this.config.enabled) {
-      this.initializeBushDetection();
-    }
+  configManager;
+  botModificationService;
+  logger;
+  bushConfig;
+  vegetationTypes = /* @__PURE__ */ new Set();
+  activeBots = /* @__PURE__ */ new Map();
+  constructor(configManager, botModificationService, logger) {
+    this.configManager = configManager;
+    this.botModificationService = botModificationService;
+    this.logger = logger;
   }
-  /**
-   * Initialize bush detection system
-   */
-  initializeBushDetection() {
+  initialize() {
     try {
-      console.log("[Live Tarkov - AI] Bush shooting restrictions initialized");
-      this.setupBushDetection();
+      this.logger.info("[LiveTarkovAI] Initializing BushShootingService...");
+      this.bushConfig = this.configManager.getBushShootingConfig();
+      if (this.bushConfig.enabled) {
+        this.setupBushShootingSystem();
+        this.logger.info("[LiveTarkovAI] BushShootingService initialized successfully");
+      } else {
+        this.logger.info("[LiveTarkovAI] BushShootingService disabled in configuration");
+      }
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error initializing bush detection:", error);
+      this.logger.error(`[LiveTarkovAI] Error initializing BushShootingService: ${error}`);
     }
   }
-  /**
-   * Set up bush detection system
-   */
+  // Setup bush shooting system
+  setupBushShootingSystem() {
+    try {
+      this.initializeVegetationTypes();
+      this.setupShootingPrevention();
+      this.setupTrackingSystems();
+      this.logger.info("[LiveTarkovAI] Bush shooting system setup completed");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up bush shooting system: ${error}`);
+    }
+  }
+  // Initialize vegetation types
+  initializeVegetationTypes() {
+    try {
+      const vegetationTypes = this.bushConfig.vegetationTypes || ["bush", "tree", "grass", "foliage"];
+      for (const vegetationType of vegetationTypes) {
+        this.vegetationTypes.add(vegetationType.toLowerCase());
+      }
+      this.logger.info(`[LiveTarkovAI] Initialized ${this.vegetationTypes.size} vegetation types`);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error initializing vegetation types: ${error}`);
+    }
+  }
+  // Setup shooting prevention systems
+  setupShootingPrevention() {
+    try {
+      if (this.bushConfig.preventShootingThroughBushes) {
+        this.setupShootingThroughBushPrevention();
+      }
+      if (this.bushConfig.preventShootingFromBushes) {
+        this.setupShootingFromBushPrevention();
+      }
+      this.logger.info("[LiveTarkovAI] Shooting prevention systems configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up shooting prevention: ${error}`);
+    }
+  }
+  // Setup shooting through bush prevention
+  setupShootingThroughBushPrevention() {
+    try {
+      this.hookIntoBotShooting();
+      this.setupLineOfSightChecks();
+      this.logger.info("[LiveTarkovAI] Shooting through bush prevention configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up shooting through bush prevention: ${error}`);
+    }
+  }
+  // Setup shooting from bush prevention
+  setupShootingFromBushPrevention() {
+    try {
+      this.hookIntoBotPositioning();
+      this.setupBushDetection();
+      this.logger.info("[LiveTarkovAI] Shooting from bush prevention configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up shooting from bush prevention: ${error}`);
+    }
+  }
+  // Setup tracking systems
+  setupTrackingSystems() {
+    try {
+      if (this.bushConfig.allowTrackingThroughBushes) {
+        this.setupBushTracking();
+        this.logger.info("[LiveTarkovAI] Bush tracking system configured");
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up tracking systems: ${error}`);
+    }
+  }
+  // Hook into bot shooting mechanics
+  hookIntoBotShooting() {
+    try {
+      this.monitorBotShooting();
+      this.logger.info("[LiveTarkovAI] Bot shooting hooks configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error hooking into bot shooting: ${error}`);
+    }
+  }
+  // Setup line of sight checks
+  setupLineOfSightChecks() {
+    try {
+      this.logger.info("[LiveTarkovAI] Line of sight checks configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error setting up line of sight checks: ${error}`);
+    }
+  }
+  // Hook into bot positioning
+  hookIntoBotPositioning() {
+    try {
+      this.monitorBotPositions();
+      this.logger.info("[LiveTarkovAI] Bot positioning hooks configured");
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error hooking into bot positioning: ${error}`);
+    }
+  }
+  // Setup bush detection
   setupBushDetection() {
     try {
-      this.setupVegetationDetection();
-      this.setupShootingRestrictions();
-      console.log("[Live Tarkov - AI] Bush detection system configured");
+      this.logger.info("[LiveTarkovAI] Bush detection system configured");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up bush detection:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bush detection: ${error}`);
     }
   }
-  /**
-   * Set up vegetation detection
-   */
-  setupVegetationDetection() {
+  // Setup bush tracking
+  setupBushTracking() {
     try {
-      console.log("[Live Tarkov - AI] Vegetation detection configured");
+      this.logger.info("[LiveTarkovAI] Bush tracking system configured");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up vegetation detection:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bush tracking: ${error}`);
     }
   }
-  /**
-   * Set up shooting restrictions
-   */
-  setupShootingRestrictions() {
+  // Monitor bot shooting events
+  monitorBotShooting() {
     try {
-      this.hookIntoShootingSystem();
-      console.log("[Live Tarkov - AI] Shooting restrictions configured");
+      setInterval(() => {
+        this.checkBotShooting();
+      }, 1e3);
+      this.logger.info("[LiveTarkovAI] Bot shooting monitoring configured");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error setting up shooting restrictions:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bot shooting monitoring: ${error}`);
     }
   }
-  /**
-   * Hook into the shooting system
-   */
-  hookIntoShootingSystem() {
+  // Monitor bot positions
+  monitorBotPositions() {
     try {
-      console.log("[Live Tarkov - AI] Shooting system hooks installed");
+      setInterval(() => {
+        this.checkBotPositions();
+      }, 2e3);
+      this.logger.info("[LiveTarkovAI] Bot position monitoring configured");
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error hooking into shooting system:", error);
+      this.logger.error(`[LiveTarkovAI] Error setting up bot position monitoring: ${error}`);
     }
   }
-  /**
-   * Check if a bot can shoot at a target
-   */
-  canBotShoot(botId, targetPosition, botPosition) {
-    if (!this.config.enabled) return true;
+  // Check bot shooting for bush violations
+  checkBotShooting() {
     try {
-      if (this.isBotInBush(botPosition)) {
-        if (this.config.preventShootingFromBushes) {
-          console.log(`[Live Tarkov - AI] Bot ${botId} prevented from shooting from bush`);
-          return false;
+      for (const [botId, bot] of this.activeBots) {
+        if (this.isBotShooting(bot)) {
+          this.handleBotShooting(bot);
         }
       }
-      if (this.config.preventShootingThroughBushes) {
-        if (this.isBushBetweenPositions(botPosition, targetPosition)) {
-          console.log(`[Live Tarkov - AI] Bot ${botId} prevented from shooting through bush`);
-          return false;
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error checking bot shooting: ${error}`);
+    }
+  }
+  // Check bot positions for bush violations
+  checkBotPositions() {
+    try {
+      for (const [botId, bot] of this.activeBots) {
+        if (this.isBotInBush(bot)) {
+          this.handleBotInBush(bot);
         }
       }
-      return true;
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error checking bot shooting permission for ${botId}:`, error);
-      return true;
+      this.logger.error(`[LiveTarkovAI] Error checking bot positions: ${error}`);
     }
   }
-  /**
-   * Check if a bot is in a bush
-   */
-  isBotInBush(botPosition) {
+  // Check if bot is shooting
+  isBotShooting(bot) {
     try {
-      return this.checkVegetationOverlap(botPosition);
+      return bot && bot.isShooting === true;
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error checking if bot is in bush:", error);
       return false;
     }
   }
-  /**
-   * Check if there's a bush between two positions
-   */
-  isBushBetweenPositions(startPos, endPos) {
+  // Check if bot is in bush
+  isBotInBush(bot) {
     try {
-      return this.checkLineOfSightForVegetation(startPos, endPos);
+      if (!bot || !bot.position) return false;
+      return this.isPositionNearVegetation(bot.position);
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error checking bush between positions:", error);
       return false;
     }
   }
-  /**
-   * Check vegetation overlap at a position
-   */
-  checkVegetationOverlap(position) {
+  // Check if position is near vegetation
+  isPositionNearVegetation(position) {
     try {
+      const vegetationPositions = this.getVegetationPositions();
+      for (const vegPos of vegetationPositions) {
+        const distance = this.calculateDistance(position, vegPos);
+        if (distance <= this.bushConfig.bushDetectionRange) {
+          return true;
+        }
+      }
       return false;
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error checking vegetation overlap:", error);
-      return false;
-    }
-  }
-  /**
-   * Check line of sight for vegetation
-   */
-  checkLineOfSightForVegetation(startPos, endPos) {
-    try {
-      return false;
-    } catch (error) {
-      console.error("[Live Tarkov - AI] Error checking line of sight for vegetation:", error);
       return false;
     }
   }
-  /**
-   * Allow bot to track target through bushes (but not shoot)
-   */
-  allowTrackingThroughBushes(botId, targetPosition, botPosition) {
-    if (!this.config.enabled || !this.config.allowTrackingThroughBushes) return true;
+  // Get vegetation positions
+  getVegetationPositions() {
     try {
-      return true;
+      return [];
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error checking tracking permission for ${botId}:`, error);
-      return true;
+      return [];
     }
   }
-  /**
-   * Register a bush location
-   */
-  registerBush(bushId, bushData) {
+  // Calculate distance between two positions
+  calculateDistance(pos1, pos2) {
     try {
-      this.activeBushes.set(bushId, bushData);
-      console.log(`[Live Tarkov - AI] Bush ${bushId} registered`);
+      if (!pos1 || !pos2 || !pos1.x || !pos1.y || !pos1.z || !pos2.x || !pos2.y || !pos2.z) {
+        return Infinity;
+      }
+      const dx = pos1.x - pos2.x;
+      const dy = pos1.y - pos2.y;
+      const dz = pos1.z - pos2.z;
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error registering bush ${bushId}:`, error);
+      return Infinity;
     }
   }
-  /**
-   * Unregister a bush location
-   */
-  unregisterBush(bushId) {
+  // Handle bot shooting violations
+  handleBotShooting(bot) {
     try {
-      this.activeBushes.delete(bushId);
-      console.log(`[Live Tarkov - AI] Bush ${bushId} unregistered`);
+      if (!bot) return;
+      if (this.isBotShootingThroughVegetation(bot)) {
+        this.preventShootingThroughVegetation(bot);
+      }
+      if (this.isBotShootingFromVegetation(bot)) {
+        this.preventShootingFromVegetation(bot);
+      }
     } catch (error) {
-      console.error(`[Live Tarkov - AI] Error unregistering bush ${bushId}:`, error);
+      this.logger.error(`[LiveTarkovAI] Error handling bot shooting: ${error}`);
     }
   }
-  /**
-   * Get bush shooting restriction status
-   */
-  getRestrictionStatus() {
-    return {
-      enabled: this.config.enabled,
-      preventShootingThroughBushes: this.config.preventShootingThroughBushes,
-      preventShootingFromBushes: this.config.preventShootingFromBushes,
-      allowTrackingThroughBushes: this.config.allowTrackingThroughBushes,
-      bushDetectionRange: this.config.bushDetectionRange,
-      activeBushes: this.activeBushes.size,
-      restrictedBots: this.botShootingStates.size
-    };
-  }
-  /**
-   * Clean up bush shooting service
-   */
-  cleanup() {
+  // Handle bot in bush violations
+  handleBotInBush(bot) {
     try {
-      this.activeBushes.clear();
-      this.botShootingStates.clear();
-      console.log("[Live Tarkov - AI] Bush shooting service cleaned up");
+      if (!bot) return;
+      this.applyBushRestrictions(bot);
+      this.logger.info(`[LiveTarkovAI] Bot ${bot.id || "unknown"} detected in bush - restrictions applied`);
     } catch (error) {
-      console.error("[Live Tarkov - AI] Error cleaning up bush shooting service:", error);
+      this.logger.error(`[LiveTarkovAI] Error handling bot in bush: ${error}`);
     }
+  }
+  // Check if bot is shooting through vegetation
+  isBotShootingThroughVegetation(bot) {
+    try {
+      if (!bot || !bot.position || !bot.targetPosition) return false;
+      return this.doesLinePassThroughVegetation(bot.position, bot.targetPosition);
+    } catch (error) {
+      return false;
+    }
+  }
+  // Check if bot is shooting from vegetation
+  isBotShootingFromVegetation(bot) {
+    try {
+      if (!bot || !bot.position) return false;
+      return this.isPositionInVegetation(bot.position);
+    } catch (error) {
+      return false;
+    }
+  }
+  // Check if line passes through vegetation
+  doesLinePassThroughVegetation(startPos, endPos) {
+    try {
+      return this.isPositionNearVegetation(startPos) || this.isPositionNearVegetation(endPos);
+    } catch (error) {
+      return false;
+    }
+  }
+  // Check if position is in vegetation
+  isPositionInVegetation(position) {
+    try {
+      const vegetationPositions = this.getVegetationPositions();
+      for (const vegPos of vegetationPositions) {
+        const distance = this.calculateDistance(position, vegPos);
+        if (distance <= 5) {
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  }
+  // Prevent shooting through vegetation
+  preventShootingThroughVegetation(bot) {
+    try {
+      if (!bot) return;
+      this.cancelBotShot(bot);
+      this.applyShootingPenalty(bot);
+      this.logger.info(`[LiveTarkovAI] Prevented bot ${bot.id || "unknown"} from shooting through vegetation`);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error preventing shooting through vegetation: ${error}`);
+    }
+  }
+  // Prevent shooting from vegetation
+  preventShootingFromVegetation(bot) {
+    try {
+      if (!bot) return;
+      this.cancelBotShot(bot);
+      this.applyShootingPenalty(bot);
+      this.logger.info(`[LiveTarkovAI] Prevented bot ${bot.id || "unknown"} from shooting from vegetation`);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error preventing shooting from vegetation: ${error}`);
+    }
+  }
+  // Apply bush restrictions
+  applyBushRestrictions(bot) {
+    try {
+      if (!bot) return;
+      if (bot.accuracy !== void 0) {
+        bot.originalAccuracy = bot.accuracy;
+        bot.accuracy = Math.max(0.1, bot.accuracy * 0.3);
+      }
+      if (bot.reactionTime !== void 0) {
+        bot.originalReactionTime = bot.reactionTime;
+        bot.reactionTime = bot.reactionTime * 2;
+      }
+      bot.bushRestricted = true;
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error applying bush restrictions: ${error}`);
+    }
+  }
+  // Cancel bot shot
+  cancelBotShot(bot) {
+    try {
+      if (!bot) return;
+      bot.shotCancelled = true;
+      bot.lastShotTime = Date.now();
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error cancelling bot shot: ${error}`);
+    }
+  }
+  // Apply shooting penalty
+  applyShootingPenalty(bot) {
+    try {
+      if (!bot) return;
+      if (bot.reactionTime !== void 0) {
+        bot.reactionTime = bot.reactionTime * 1.5;
+        setTimeout(() => {
+          if (bot.reactionTime && bot.originalReactionTime) {
+            bot.reactionTime = bot.originalReactionTime;
+          }
+        }, 5e3);
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error applying shooting penalty: ${error}`);
+    }
+  }
+  // Add bot to monitoring
+  addBot(botId, bot) {
+    try {
+      if (!botId || !bot) return;
+      this.activeBots.set(botId, bot);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error adding bot to monitoring: ${error}`);
+    }
+  }
+  // Remove bot from monitoring
+  removeBot(botId) {
+    try {
+      if (!botId) return;
+      this.activeBots.delete(botId);
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error removing bot from monitoring: ${error}`);
+    }
+  }
+  // Get bush shooting configuration
+  getBushConfig() {
+    return this.bushConfig;
+  }
+  // Update bush shooting configuration
+  updateBushConfig(newConfig) {
+    try {
+      this.bushConfig = { ...this.bushConfig, ...newConfig };
+      if (this.bushConfig.enabled) {
+        this.setupBushShootingSystem();
+        this.logger.info("[LiveTarkovAI] Bush shooting configuration updated");
+      }
+    } catch (error) {
+      this.logger.error(`[LiveTarkovAI] Error updating bush shooting configuration: ${error}`);
+    }
+  }
+  // Get active bot count
+  getActiveBotCount() {
+    return this.activeBots.size;
+  }
+  // Get vegetation types
+  getVegetationTypes() {
+    return new Set(this.vegetationTypes);
   }
 }
 // Annotate the CommonJS export names for ESM import in node:

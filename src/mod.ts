@@ -1,94 +1,185 @@
-// Remove problematic SPT imports and use our custom interfaces
-// import { DependencyContainer } from "tsyringe";
-// import { IPreSptLoadMod } from "@spt/models/external/IPreSptLoadMod";
-// import { IPostDBLoadMod } from "@spt/models/external/IPostDBLoadMod";
-// import { ConfigTypes } from "@spt/models/enums/ConfigTypes";
-// import { ICoreConfig } from "@spt/models/spt/config/ICoreConfig";
-// import { ConfigServer } from "@spt/servers/ConfigServer";
-// import { FileSystemSync } from "@spt/utils/FileSystemSync";
-// import { DatabaseServer } from "@spt/servers/DatabaseServer";
-// import { ILocationBase } from "@spt/models/eft/common/ILocationBase";
-// import { IRaidChanges } from "@spt/models/spt/location/IRaidChanges";
-import { minVersion, satisfies, SemVer } from "semver";
 import path from "node:path";
 import fs from "node:fs";
 
 import { SpawnManager } from "./SpawnManager";
 import { ConfigManager } from "./ConfigManager";
-
-// Define custom interfaces for SPT types
-interface DependencyContainer {
-    resolve<T>(token: string): T;
-    afterResolution<T>(token: string, callback: (token: string, result: T) => void, options?: any): void;
-}
-
-interface DatabaseServer {
-    getTables(): {
-        bots: {
-            types: { [key: string]: any };
-        };
-    };
-}
-
-interface IPreSptLoadMod {
-    preSptLoad(container: DependencyContainer): void;
-}
-
-interface IPostDBLoadMod {
-    postDBLoad(container: DependencyContainer): void;
-}
+import { HotZoneManager } from "./HotZoneManager";
+import { SainIntegrationService } from "./SainIntegrationService";
+import { FikaIntegrationService } from "./FikaIntegrationService";
+import { BushShootingService } from "./BushShootingService";
+import {
+    IPreSptLoadMod,
+    IPostDBLoadMod,
+    DependencyContainer,
+    DatabaseServer,
+    ConfigServer,
+    BotHelper,
+    BotGenerationCacheService,
+    BotController,
+    LocationController,
+    IRaidChanges,
+    ILocationBase,
+    IBotType,
+    IBotBase,
+    BotDifficulty,
+    BotType,
+    EquipmentSlots,
+    ItemHelper,
+    BotEquipmentModService,
+    BotModificationService,
+    BotSpawnService,
+    RandomUtil,
+    TimeUtil,
+    JsonUtil,
+    ConfigTypes,
+    ICoreConfig,
+    FileSystemSync,
+    Logger
+} from "./types/spt-types";
 
 class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
 {
     private spawnManager: SpawnManager;
     private configManager: ConfigManager;
+    private hotZoneManager: HotZoneManager;
+    private sainIntegration: SainIntegrationService;
+    private fikaIntegration: FikaIntegrationService;
+    private bushShootingService: BushShootingService;
+    private logger: Logger;
+    private randomUtil: RandomUtil;
+    private timeUtil: TimeUtil;
+    private jsonUtil: JsonUtil;
+    private itemHelper: ItemHelper;
+    private botHelper: BotHelper;
+    private botEquipmentModService: BotEquipmentModService;
+    private botModificationService: BotModificationService;
+    private botSpawnService: BotSpawnService;
+    private botGenerationCacheService: BotGenerationCacheService;
+    private databaseServer: DatabaseServer;
+    private configServer: ConfigServer;
+    private locationController: LocationController;
+    private botController: BotController;
 
-    constructor() {
-        this.spawnManager = new SpawnManager();
+    constructor(
+        logger: Logger,
+        randomUtil: RandomUtil,
+        timeUtil: TimeUtil,
+        jsonUtil: JsonUtil,
+        itemHelper: ItemHelper,
+        botHelper: BotHelper,
+        botEquipmentModService: BotEquipmentModService,
+        botModificationService: BotModificationService,
+        botSpawnService: BotSpawnService,
+        botGenerationCacheService: BotGenerationCacheService,
+        databaseServer: DatabaseServer,
+        configServer: ConfigServer,
+        locationController: LocationController,
+        botController: BotController
+    ) {
+        this.logger = logger;
+        this.randomUtil = randomUtil;
+        this.timeUtil = timeUtil;
+        this.jsonUtil = jsonUtil;
+        this.itemHelper = itemHelper;
+        this.botHelper = botHelper;
+        this.botEquipmentModService = botEquipmentModService;
+        this.botModificationService = botModificationService;
+        this.botSpawnService = botSpawnService;
+        this.botGenerationCacheService = botGenerationCacheService;
+        this.databaseServer = databaseServer;
+        this.configServer = configServer;
+        this.locationController = locationController;
+        this.botController = botController;
+
+        // Initialize our services
         this.configManager = new ConfigManager();
+        this.spawnManager = new SpawnManager(
+            this.databaseServer,
+            this.botHelper,
+            this.botEquipmentModService,
+            this.botModificationService,
+            this.botSpawnService,
+            this.botGenerationCacheService,
+            this.randomUtil,
+            this.timeUtil,
+            this.itemHelper,
+            this.logger
+        );
+        this.hotZoneManager = new HotZoneManager(this.configManager, this.locationController, this.logger);
+        this.sainIntegration = new SainIntegrationService(this.configManager, this.botModificationService, this.logger);
+        this.fikaIntegration = new FikaIntegrationService(this.configManager, this.botController, this.logger);
+        this.bushShootingService = new BushShootingService(this.configManager, this.botModificationService, this.logger);
     }
 
     // PreSPTLoad - Initialize mod and register hooks
     public preSptLoad(container: DependencyContainer): void 
     {
-        if (!this.validSptVersion(container)) 
-        {
-            console.error(`[LiveTarkovAI] This version was not made for your version of SPT. Disabling. Requires ${this.validMinimumSptVersion(container)} or higher.`);
-            return;
+        try {
+            console.log("[LiveTarkovAI] Initializing Live Tarkov - AI Mod...");
+            
+            // Check SPT version compatibility
+            if (!this.validSptVersion()) {
+                console.error(`[LiveTarkovAI] SPT version incompatible. Requires 3.11.0 or higher.`);
+                return;
+            }
+            
+            // Check for required dependencies
+            this.checkRequiredDependencies();
+            
+            // Initialize configuration
+            this.configManager.initialize();
+            
+            // Register spawn hooks
+            this.registerSpawnHooks(container);
+            
+            console.log("[LiveTarkovAI] Live Tarkov - AI Mod initialized successfully!");
+        } catch (error) {
+            console.error(`[LiveTarkovAI] Error during preSptLoad: ${error}`);
         }
-
-        console.log("[LiveTarkovAI] Initializing Live Tarkov - AI Mod...");
-        
-        // Check for required dependencies
-        this.checkRequiredDependencies(container);
-        
-        // Initialize configuration
-        this.configManager.initialize();
-        
-        // Register spawn hooks
-        this.registerSpawnHooks(container);
-        
-        console.log("[LiveTarkovAI] Live Tarkov - AI Mod initialized successfully!");
     }
 
     // PostDBLoad - Configure spawn data after database is loaded
     public postDBLoad(container: DependencyContainer): void 
     {
-        console.log("[LiveTarkovAI] Configuring live Tarkov spawn data...");
-        
-        const databaseServer = container.resolve<DatabaseServer>("DatabaseServer");
-        
-        // Initialize spawn manager with available services
-        this.spawnManager.initialize(databaseServer);
-        
-        // Apply custom spawn configurations
-        this.spawnManager.applyCustomSpawnConfig();
-        
-        console.log("[LiveTarkovAI] Live Tarkov spawn data configuration completed!");
+        try {
+            console.log("[LiveTarkovAI] Configuring live Tarkov spawn data...");
+            
+            // Initialize spawn manager with database
+            this.spawnManager.initialize();
+            
+            // Apply custom spawn configurations
+            this.spawnManager.applyCustomSpawnConfig();
+            
+            // Initialize hot zone management
+            this.hotZoneManager.initialize();
+            
+            // Initialize integration services
+            this.sainIntegration.initialize();
+            this.fikaIntegration.initialize();
+            this.bushShootingService.initialize();
+            
+            console.log("[LiveTarkovAI] Live Tarkov spawn data configuration completed!");
+        } catch (error) {
+            console.error(`[LiveTarkovAI] Error during postDBLoad: ${error}`);
+        }
+    }
+    
+    // Check SPT version compatibility
+    private validSptVersion(): boolean {
+        try {
+            const sptVersion = this.configServer.getConfig<ICoreConfig>(ConfigTypes.CORE).version;
+            const minVersion = "3.11.0";
+            
+            // Simple version check - can be enhanced with semver
+            return sptVersion >= minVersion;
+        } catch (error) {
+            console.warn("[LiveTarkovAI] Could not verify SPT version, continuing...");
+            return true;
+        }
     }
     
     // Check for required dependencies
-    private checkRequiredDependencies(container: DependencyContainer): void {
+    private checkRequiredDependencies(): void {
         try {
             // Check for SAIN (optional but recommended)
             const sainDetected = this.detectSAINMod();
@@ -96,8 +187,6 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 console.log("[LiveTarkovAI] ✓ SAIN found - enhanced bot behavior enabled");
             } else {
                 console.log("[LiveTarkovAI] ℹ️ SAIN not found - enhanced bot behavior disabled (optional)");
-                // Debug: Show why SAIN wasn't detected
-                this.debugSAINDetection();
             }
 
             // Check for Fika (optional but recommended)
@@ -108,9 +197,9 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 console.log("[LiveTarkovAI] ℹ️ Fika not found - multiplayer compatibility disabled (optional)");
             }
 
-            // Check for BepInEx plugins (BigBrain, Waypoints)
+            // Check for BepInEx plugins (BigBrain, Waypoints) - REQUIRED
             this.checkBepInExPlugins();
-
+            
         } catch (error) {
             console.error(`[LiveTarkovAI] Error checking dependencies: ${error}`);
         }
@@ -150,43 +239,15 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
             // Method 4: Check for SAIN in process modules
             if (process.mainModule && process.mainModule.children) {
                 for (const child of process.mainModule.children) {
-                    if (child.filename && (child.filename.includes("SAIN") || child.filename.includes("zSolarint"))) {
+                    if (child.filename && (child.filename.includes("SAIN") || child.filename.includes("sain"))) {
                         return true;
                     }
                 }
             }
 
-            // Method 5: Check for SAIN in global scope (like Fika)
-            if (globalThis.SAINService || globalThis.SAINBotService || globalThis.SAIN) {
+            // Method 5: Check for SAIN in global scope
+            if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
                 return true;
-            }
-
-            // Method 6: Check for SAIN in SPT container if available
-            try {
-                if (globalThis.SPT_CONTAINER) {
-                    const container = globalThis.SPT_CONTAINER;
-                    if (container.resolve && container.resolve("SAINService")) {
-                        return true;
-                    }
-                    if (container.resolve && container.resolve("SAINBotService")) {
-                        return true;
-                    }
-                }
-            } catch (error) {
-                // Continue to next method
-            }
-
-            // Method 7: Check for SAIN in package.json dependencies
-            try {
-                const packageJsonPath = path.join(process.cwd(), "package.json");
-                if (fs.existsSync(packageJsonPath)) {
-                    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-                    if (packageJson.dependencies && packageJson.dependencies["zSolarint-SAIN-ServerMod"]) {
-                        return true;
-                    }
-                }
-            } catch (error) {
-                // Continue to next method
             }
 
             return false;
@@ -246,31 +307,35 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         }
     }
 
-    // Check for BepInEx plugins (BigBrain, Waypoints)
+    // Check for BepInEx plugins (BigBrain, Waypoints) - REQUIRED
     private checkBepInExPlugins(): void {
         try {
-            // Check if they're available through other means
             const bigBrainDetected = this.detectBigBrainPlugin();
             const waypointsDetected = this.detectWaypointsPlugin();
 
             if (bigBrainDetected) {
                 console.log("[LiveTarkovAI] ✓ BigBrain plugin detected - enhanced AI enabled");
             } else {
-                console.log("[LiveTarkovAI] ℹ️ BigBrain plugin not detected - basic AI behavior");
+                console.error("[LiveTarkovAI] ❌ BigBrain plugin NOT detected - REQUIRED for enhanced AI behavior");
+                console.error("[LiveTarkovAI] Please install DrakiaXYZ-BigBrain BepInEx plugin");
             }
 
             if (waypointsDetected) {
                 console.log("[LiveTarkovAI] ✓ Waypoints plugin detected - pathfinding enabled");
             } else {
-                console.log("[LiveTarkovAI] ℹ️ Waypoints plugin not detected - basic pathfinding");
+                console.error("[LiveTarkovAI] ❌ Waypoints plugin NOT detected - REQUIRED for pathfinding");
+                console.error("[LiveTarkovAI] Please install DrakiaXYZ-Waypoints BepInEx plugin");
             }
 
+            // Check for progression mods to disable our gear progression
+            this.checkProgressionMods();
+
         } catch (error) {
-            console.log("[LiveTarkovAI] ℹ️ Unable to detect BepInEx plugins - using basic functionality");
+            console.error(`[LiveTarkovAI] Error checking BepInEx plugins: ${error}`);
         }
     }
 
-    // Detect BigBrain plugin by checking for DLL and folder
+    // Detect BigBrain plugin
     private detectBigBrainPlugin(): boolean {
         try {
             // Method 1: Check for global BigBrain objects
@@ -280,7 +345,6 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
 
             // Method 2: Check if we can access BigBrain through SPT services
             try {
-                // Try to access BigBrain through SPT container if available
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("BigBrainService")) {
@@ -309,7 +373,6 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
 
             // Method 5: Check file system for BepInEx plugin files
             try {
-                // Check common BepInEx paths
                 const possiblePaths = [
                     path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain.dll"),
                     path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-BigBrain", "DrakiaXYZ-BigBrain.dll"),
@@ -338,7 +401,7 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         }
     }
 
-    // Detect Waypoints plugin by checking for folder and functionality
+    // Detect Waypoints plugin
     private detectWaypointsPlugin(): boolean {
         try {
             // Method 1: Check for global Waypoints objects
@@ -348,7 +411,6 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
 
             // Method 2: Check if we can access Waypoints through SPT services
             try {
-                // Try to access Waypoints through SPT container if available
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("WaypointsService")) {
@@ -375,22 +437,13 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                 }
             }
 
-            // Method 5: Try to require Waypoints directly (might work in some cases)
+            // Method 5: Check file system for BepInEx plugin files
             try {
-                require("DrakiaXYZ-Waypoints");
-                return true;
-            } catch (error) {
-                // Continue to next method
-            }
-
-            // Method 6: Check file system for BepInEx plugin folder
-            try {
-                // Check common BepInEx paths
                 const possiblePaths = [
-                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-Waypoints"),
+                    path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-Waypoints.dll"),
                     path.join(process.cwd(), "BepInEx", "plugins", "DrakiaXYZ-Waypoints", "DrakiaXYZ-Waypoints.dll"),
-                    path.join(__dirname, "..", "..", "..", "BepInEx", "plugins", "DrakiaXYZ-Waypoints"),
-                    path.join(__dirname, "..", "..", "BepInEx", "plugins", "DrakiaXYZ-Waypoints", "DrakiaXYZ-Waypoints.dll")
+                    path.join(__dirname, "..", "..", "..", "BepInEx", "plugins", "DrakiaXYZ-Waypoints.dll"),
+                    path.join(__dirname, "..", "..", "BepInEx", "plugins", "DrakiaXYZ-Waypoints.dll")
                 ];
 
                 for (const pluginPath of possiblePaths) {
@@ -399,7 +452,7 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
                     }
                 }
 
-                // Method 7: Scan BepInEx plugins folder comprehensively
+                // Method 6: Scan BepInEx plugins folder comprehensively
                 if (this.scanBepInExFolder("DrakiaXYZ-Waypoints")) {
                     return true;
                 }
@@ -414,216 +467,118 @@ class LiveTarkovAIMod implements IPreSptLoadMod, IPostDBLoadMod
         }
     }
 
-    // Comprehensive BepInEx folder scanner
+    // Scan BepInEx plugins folder for specific plugin
     private scanBepInExFolder(pluginName: string): boolean {
         try {
-            // Try multiple possible BepInEx locations
-            const possibleBepInExPaths = [
-                path.join(process.cwd(), "BepInEx"),
-                path.join(__dirname, "..", "..", "..", "BepInEx"),
-                path.join(process.cwd(), "..", "BepInEx"),
-                path.join(process.cwd(), "..", "..", "BepInEx")
+            const bepinExPaths = [
+                path.join(process.cwd(), "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "..", "BepInEx", "plugins"),
+                path.join(__dirname, "..", "..", "BepInEx", "plugins")
             ];
 
-            for (const bepInExPath of possibleBepInExPaths) {
-                if (fs.existsSync(bepInExPath)) {
-                    const pluginsPath = path.join(bepInExPath, "plugins");
-                    if (fs.existsSync(pluginsPath)) {
-                        // Scan for the plugin silently
-                        if (this.scanPluginsFolder(pluginsPath, pluginName)) {
+            for (const bepinExPath of bepinExPaths) {
+                if (fs.existsSync(bepinExPath)) {
+                    const items = fs.readdirSync(bepinExPath);
+                    for (const item of items) {
+                        if (item.includes(pluginName)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // Check for progression mods to disable our gear progression
+    private checkProgressionMods(): void {
+        try {
+            const progressionMods = [
+                "APBS - Acid's Progressive Bot System",
+                "ALP - Algorithmic Level Progression", 
+                "Valens-Progression"
+            ];
+
+            let foundMod = false;
+            for (const modName of progressionMods) {
+                if (this.detectProgressionMod(modName)) {
+                    console.log(`[LiveTarkovAI] ⚠️ ${modName} detected - disabling built-in gear progression`);
+                    this.configManager.setGearProgressionEnabled(false);
+                    foundMod = true;
+                    break;
+                }
+            }
+
+            if (!foundMod) {
+                console.log("[LiveTarkovAI] ✓ No external progression mods detected - using built-in gear progression");
+                this.configManager.setGearProgressionEnabled(true);
+            }
+        } catch (error) {
+            console.error(`[LiveTarkovAI] Error checking progression mods: ${error}`);
+        }
+    }
+
+    // Detect specific progression mod
+    private detectProgressionMod(modName: string): boolean {
+        try {
+            // Check mods folder
+            const modPaths = [
+                path.join(process.cwd(), "user", "mods"),
+                path.join(__dirname, "..", ".."),
+                path.join(process.cwd(), "mods")
+            ];
+
+            for (const modPath of modPaths) {
+                if (fs.existsSync(modPath)) {
+                    const items = fs.readdirSync(modPath);
+                    for (const item of items) {
+                        if (item.toLowerCase().includes(modName.toLowerCase().replace(/\s+/g, ""))) {
                             return true;
                         }
                     }
                 }
             }
 
+            // Check require.cache
+            for (const modulePath in require.cache) {
+                if (modulePath.toLowerCase().includes(modName.toLowerCase().replace(/\s+/g, ""))) {
+                    return true;
+                }
+            }
+
             return false;
         } catch (error) {
             return false;
         }
     }
 
-    // Scan a specific plugins folder for a plugin
-    private scanPluginsFolder(pluginsPath: string, pluginName: string): boolean {
+    // Register spawn hooks with SPT
+    private registerSpawnHooks(container: DependencyContainer): void {
         try {
-            const items = fs.readdirSync(pluginsPath);
-            
-            for (const item of items) {
-                const itemPath = path.join(pluginsPath, item);
-                const stats = fs.statSync(itemPath);
-                
-                if (stats.isDirectory()) {
-                    // Check if this directory contains the plugin
-                    if (item.includes(pluginName)) {
-                        return true;
-                    }
-                    
-                    // Check inside the directory for DLL files
-                    try {
-                        const subItems = fs.readdirSync(itemPath);
-                        for (const subItem of subItems) {
-                            if (subItem.includes(pluginName) && subItem.endsWith('.dll')) {
-                                return true;
-                            }
-                        }
-                    } catch (error) {
-                        // Skip subdirectory scanning if it fails
-                    }
-                } else if (stats.isFile() && item.endsWith('.dll')) {
-                    // Check if this DLL file is the plugin
-                    if (item.includes(pluginName)) {
-                        return true;
-                    }
+            // Register our spawn manager to handle bot spawning
+            container.afterResolution("BotSpawnService", (token: string, result: any) => {
+                if (result && typeof result === "object") {
+                    // Hook into bot spawning process
+                    this.spawnManager.hookIntoSpawnService(result);
                 }
-            }
-            
-            return false;
+            });
+
+            // Register our location controller to handle map-specific spawns
+            container.afterResolution("LocationController", (token: string, result: any) => {
+                if (result && typeof result === "object") {
+                    // Hook into location spawning process
+                    this.hotZoneManager.hookIntoLocationController(result);
+                }
+            });
+
+            console.log("[LiveTarkovAI] Spawn hooks registered successfully");
         } catch (error) {
-            return false;
-        }
-    }
-    
-    // Register hooks for spawn modifications
-    private registerSpawnHooks(container: DependencyContainer): void 
-    {
-        // Hook into raid time adjustment service for wave modifications
-        container.afterResolution("RaidTimeAdjustmentService", (_t, result: any) =>
-        {
-            const originalAdjustWaves = result.adjustWaves;
-            result.adjustWaves = (mapBase: any, raidAdjustments: any) =>
-            {
-                // Call original method first
-                if (originalAdjustWaves) {
-                    originalAdjustWaves(mapBase, raidAdjustments);
-                }
-                
-                // Apply custom spawn modifications
-                this.spawnManager.modifyRaidSpawns(mapBase, raidAdjustments);
-            }
-        }, {frequency: "Always"});
-        
-        console.log("[LiveTarkovAI] Live Tarkov spawn hooks registered successfully");
-    }
-    
-    // Version validation
-    public validSptVersion(container: DependencyContainer): boolean
-    {
-        try {
-            // Try to get SPT version from global or package.json
-            const sptVersion = globalThis.G_SPTVERSION || "3.11.0";
-            const packageJsonPath: string = path.join(__dirname, "../package.json");
-            
-            if (fs.existsSync(packageJsonPath)) {
-                const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-                const modSptVersion = packageJson.sptVersion || "~3.11";
-                return satisfies(sptVersion, modSptVersion);
-            }
-            
-            return true; // Default to true if we can't check
-        } catch (error) {
-            console.warn(`[LiveTarkovAI] Version check failed: ${error}`);
-            return true; // Default to true on error
-        }
-    }
-
-    public validMinimumSptVersion(container: DependencyContainer): SemVer
-    {
-        try {
-            const packageJsonPath: string = path.join(__dirname, "../package.json");
-            
-            if (fs.existsSync(packageJsonPath)) {
-                const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-                const modSptVersion = packageJson.sptVersion || "~3.11";
-                const minVer = minVersion(modSptVersion);
-                return minVer || new SemVer("3.11.0");
-            }
-            
-            return new SemVer("3.11.0"); // Default minimum version
-        } catch (error) {
-            console.warn(`[LiveTarkovAI] Minimum version check failed: ${error}`);
-            return new SemVer("3.11.0"); // Default minimum version on error
-        }
-    }
-
-    // Debug method to show why SAIN wasn't detected
-    private debugSAINDetection(): void {
-        console.log("[LiveTarkovAI] Debugging SAIN detection...");
-        console.log("[LiveTarkovAI] 1. Checking for zSolarint-SAIN-ServerMod in mods folder...");
-        const possibleSainPaths = [
-            path.join(process.cwd(), "user", "mods", "zSolarint-SAIN-ServerMod"),
-            path.join(__dirname, "..", "..", "zSolarint-SAIN-ServerMod"),
-            path.join(process.cwd(), "mods", "zSolarint-SAIN-ServerMod")
-        ];
-        for (const sainPath of possibleSainPaths) {
-            if (fs.existsSync(sainPath)) {
-                console.log(`[LiveTarkovAI] ✓ Found at: ${sainPath}`);
-            } else {
-                console.log(`[LiveTarkovAI] ℹ️ Not found at: ${sainPath}`);
-            }
-        }
-
-        console.log("[LiveTarkovAI] 2. Checking for SAIN in require.cache...");
-        for (const modulePath in require.cache) {
-            if (modulePath.includes("zSolarint-SAIN-ServerMod") || modulePath.includes("SAIN")) {
-                console.log(`[LiveTarkovAI] ✓ Found in require.cache: ${modulePath}`);
-            }
-        }
-
-        console.log("[LiveTarkovAI] 3. Checking for SAIN in process modules...");
-        if (process.mainModule && process.mainModule.children) {
-            for (const child of process.mainModule.children) {
-                if (child.filename && (child.filename.includes("SAIN") || child.filename.includes("zSolarint"))) {
-                    console.log(`[LiveTarkovAI] ✓ Found in process modules: ${child.filename}`);
-                }
-            }
-        }
-
-        console.log("[LiveTarkovAI] 4. Checking for SAIN in global scope...");
-        if (globalThis.SAINService || globalThis.SAINBotService || globalThis.SAIN) {
-            console.log("[LiveTarkovAI] ✓ Found in global scope.");
-        } else {
-            console.log("[LiveTarkovAI] ℹ️ Not found in global scope.");
-        }
-
-        console.log("[LiveTarkovAI] 5. Checking for SPT_CONTAINER...");
-        if (globalThis.SPT_CONTAINER) {
-            console.log("[LiveTarkovAI] ✓ SPT_CONTAINER found.");
-            try {
-                const container = globalThis.SPT_CONTAINER;
-                if (container.resolve && container.resolve("SAINService")) {
-                    console.log("[LiveTarkovAI] ✓ SAINService found in SPT_CONTAINER.");
-                } else {
-                    console.log("[LiveTarkovAI] ℹ️ SAINService not found in SPT_CONTAINER.");
-                }
-                if (container.resolve && container.resolve("SAINBotService")) {
-                    console.log("[LiveTarkovAI] ✓ SAINBotService found in SPT_CONTAINER.");
-                } else {
-                    console.log("[LiveTarkovAI] ℹ️ SAINBotService not found in SPT_CONTAINER.");
-                }
-            } catch (error) {
-                console.log("[LiveTarkovAI] ℹ️ Error accessing SPT_CONTAINER: " + error);
-            }
-        } else {
-            console.log("[LiveTarkovAI] ℹ️ SPT_CONTAINER not found.");
-        }
-
-        console.log("[LiveTarkovAI] 6. Checking for zSolarint-SAIN-ServerMod in package.json dependencies...");
-        try {
-            const packageJsonPath = path.join(process.cwd(), "package.json");
-            if (fs.existsSync(packageJsonPath)) {
-                const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-                if (packageJson.dependencies && packageJson.dependencies["zSolarint-SAIN-ServerMod"]) {
-                    console.log("[LiveTarkovAI] ✓ zSolarint-SAIN-ServerMod found in package.json.");
-                } else {
-                    console.log("[LiveTarkovAI] ℹ️ zSolarint-SAIN-ServerMod not found in package.json.");
-                }
-            } else {
-                console.log("[LiveTarkovAI] ℹ️ package.json not found.");
-            }
-        } catch (error) {
-            console.log("[LiveTarkovAI] ℹ️ Error reading package.json: " + error);
+            console.error(`[LiveTarkovAI] Error registering spawn hooks: ${error}`);
         }
     }
 }
 
-export const mod = new LiveTarkovAIMod();
+// Export the mod class
+export default LiveTarkovAIMod;

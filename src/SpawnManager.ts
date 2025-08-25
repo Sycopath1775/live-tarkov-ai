@@ -1,55 +1,74 @@
-// Remove problematic SPT imports and use any types for now
-// import { DatabaseServer } from "@spt/servers/DatabaseServer";
-// import { ILocationBase } from "@spt/models/eft/common/ILocationBase";
-// import { IRaidChanges } from "@spt/models/spt/location/IRaidChanges";
 import { ConfigManager } from "./ConfigManager";
-import * as path from "path";
-import * as fs from "fs";
-
-// Define basic interfaces for SPT types
-interface ILocationBase {
-    Name: string;
-    [key: string]: any;
-}
-
-interface IRaidChanges {
-    botCountAdjustments?: {
-        min: number;
-        max: number;
-    };
-    waveSettings?: {
-        count: number;
-        delay: number;
-        botsPerWave: number;
-    };
-    botTypeAdjustments?: {
-        allowedTypes: string[];
-    };
-    [key: string]: any;
-}
-
-interface DatabaseServer {
-    getTables(): {
-        bots: {
-            types: { [key: string]: any };
-        };
-    };
-}
+import {
+    DatabaseServer,
+    BotHelper,
+    BotEquipmentModService,
+    BotModificationService,
+    BotSpawnService,
+    BotGenerationCacheService,
+    RandomUtil,
+    TimeUtil,
+    ItemHelper,
+    Logger,
+    IBotType,
+    IBotBase,
+    BotDifficulty,
+    BotType
+} from "./types/spt-types";
 
 export class SpawnManager {
-    private databaseServer: DatabaseServer | null = null;
+    private databaseServer: DatabaseServer;
+    private botHelper: BotHelper;
+    private botEquipmentModService: BotEquipmentModService;
+    private botModificationService: BotModificationService;
+    private botSpawnService: BotSpawnService;
+    private botGenerationCacheService: BotGenerationCacheService;
+    private randomUtil: RandomUtil;
+    private timeUtil: TimeUtil;
+    private itemHelper: ItemHelper;
+    private logger: Logger;
     private configManager: ConfigManager;
     private sainAvailable: boolean = false;
 
-    constructor() {
+    constructor(
+        databaseServer: DatabaseServer,
+        botHelper: BotHelper,
+        botEquipmentModService: BotEquipmentModService,
+        botModificationService: BotModificationService,
+        botSpawnService: BotSpawnService,
+        botGenerationCacheService: BotGenerationCacheService,
+        randomUtil: RandomUtil,
+        timeUtil: TimeUtil,
+        itemHelper: ItemHelper,
+        logger: Logger
+    ) {
+        this.databaseServer = databaseServer;
+        this.botHelper = botHelper;
+        this.botEquipmentModService = botEquipmentModService;
+        this.botModificationService = botModificationService;
+        this.botSpawnService = botSpawnService;
+        this.botGenerationCacheService = botGenerationCacheService;
+        this.randomUtil = randomUtil;
+        this.timeUtil = timeUtil;
+        this.itemHelper = itemHelper;
+        this.logger = logger;
         this.configManager = new ConfigManager();
     }
 
-    public initialize(databaseServer: DatabaseServer): void {
-        this.databaseServer = databaseServer;
-        
-        // Check if SAIN is available for enhanced behavior
-        this.checkSAINAvailability();
+    public initialize(): void {
+        try {
+            this.logger.info("[LiveTarkovAI] Initializing SpawnManager...");
+            
+            // Check if SAIN is available for enhanced behavior
+            this.checkSAINAvailability();
+            
+            // Apply custom spawn configurations
+            this.applyCustomSpawnConfig();
+            
+            this.logger.info("[LiveTarkovAI] SpawnManager initialized successfully");
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error initializing SpawnManager: ${error}`);
+        }
     }
 
     private checkSAINAvailability(): void {
@@ -59,18 +78,18 @@ export class SpawnManager {
             
             if (sainDetected) {
                 this.sainAvailable = true;
-                console.log("[LiveTarkovAI] SAIN integration available - enhanced bot behavior enabled");
+                this.logger.info("[LiveTarkovAI] SAIN integration available - enhanced bot behavior enabled");
             } else {
                 this.sainAvailable = false;
-                console.log("[LiveTarkovAI] SAIN not available - using standard bot behavior");
+                this.logger.info("[LiveTarkovAI] SAIN not available - using standard bot behavior");
             }
         } catch (error) {
             this.sainAvailable = false;
-            console.log("[LiveTarkovAI] SAIN not available - using standard bot behavior");
+            this.logger.info("[LiveTarkovAI] SAIN not available - using standard bot behavior");
         }
     }
 
-    // Detect SAIN mod using multiple methods (same as main mod)
+    // Detect SAIN mod using multiple methods
     private detectSAINMod(): boolean {
         try {
             // Method 1: Try to require SAIN directly
@@ -81,48 +100,16 @@ export class SpawnManager {
                 // Continue to next method
             }
 
-            // Method 2: Check for SAIN in mods folder
-            const possibleSainPaths = [
-                path.join(process.cwd(), "user", "mods", "zSolarint-SAIN-ServerMod"),
-                path.join(__dirname, "..", "..", "zSolarint-SAIN-ServerMod"),
-                path.join(process.cwd(), "mods", "zSolarint-SAIN-ServerMod")
-            ];
-
-            for (const sainPath of possibleSainPaths) {
-                if (fs.existsSync(sainPath)) {
-                    return true;
-                }
-            }
-
-            // Method 3: Check for SAIN in require.cache
-            for (const modulePath in require.cache) {
-                if (modulePath.includes("zSolarint-SAIN-ServerMod") || modulePath.includes("SAIN")) {
-                    return true;
-                }
-            }
-
-            // Method 4: Check for SAIN in process modules
-            if (process.mainModule && process.mainModule.children) {
-                for (const child of process.mainModule.children) {
-                    if (child.filename && (child.filename.includes("SAIN") || child.filename.includes("zSolarint"))) {
-                        return true;
-                    }
-                }
-            }
-
-            // Method 5: Check for SAIN in global scope
-            if (globalThis.SAINService || globalThis.SAINBotService || globalThis.SAIN) {
+            // Method 2: Check for SAIN in global scope
+            if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
                 return true;
             }
 
-            // Method 6: Check for SAIN in SPT container if available
+            // Method 3: Check for SAIN in SPT container if available
             try {
                 if (globalThis.SPT_CONTAINER) {
                     const container = globalThis.SPT_CONTAINER;
                     if (container.resolve && container.resolve("SAINService")) {
-                        return true;
-                    }
-                    if (container.resolve && container.resolve("SAINBotService")) {
                         return true;
                     }
                 }
@@ -136,128 +123,28 @@ export class SpawnManager {
         }
     }
 
+    // Apply custom spawn configurations to the database
     public applyCustomSpawnConfig(): void {
         try {
-            const config = this.configManager.getConfig();
-            if (!config.enabled) {
-                console.log("[LiveTarkovAI] Mod is disabled, skipping spawn configuration");
-                return;
-            }
-
-            console.log("[LiveTarkovAI] Applying live Tarkov spawn configuration...");
+            this.logger.info("[LiveTarkovAI] Applying custom spawn configurations...");
             
-            // Modify bot types based on configuration
+            // Modify bot types in the database
             this.modifyBotTypes();
             
-            console.log("[LiveTarkovAI] Live Tarkov spawn configuration applied successfully");
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying spawn configuration: ${error}`);
-        }
-    }
-
-    public modifyRaidSpawns(mapBase: ILocationBase, raidAdjustments: IRaidChanges): void {
-        try {
-            const config = this.configManager.getConfig();
-            if (!config.enabled) {
-                return;
+            // Apply gear progression if enabled
+            if (this.configManager.isGearProgressionEnabled()) {
+                this.applyGearProgression();
             }
-
-            const mapName = mapBase.Name;
-            const mapConfig = this.configManager.getMapConfig(mapName);
             
-            if (!mapConfig || !mapConfig.enabled) {
-                return;
-            }
-
-            console.log(`[LiveTarkovAI] Modifying spawns for map: ${mapName}`);
-
-            // Apply live Tarkov spawn logic
-            if (mapConfig.liveTarkovSettings?.useAuthenticSpawns) {
-                this.applyLiveTarkovSpawns(raidAdjustments, mapConfig);
-            } else {
-                // Apply basic bot count adjustments
-                if (raidAdjustments.botCountAdjustments) {
-                    raidAdjustments.botCountAdjustments.min = mapConfig.minBots || 0;
-                    raidAdjustments.botCountAdjustments.max = mapConfig.maxBots || 0;
-                }
-            }
-
-            // Modify wave settings if enabled
-            if (config.waveSettings?.enabled) {
-                this.modifyWaveSettings(raidAdjustments, mapConfig);
-            }
-
-            // Apply bot type restrictions
-            this.applyBotTypeRestrictions(raidAdjustments, mapConfig);
-
+            this.logger.info("[LiveTarkovAI] Custom spawn configurations applied successfully");
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error modifying raid spawns: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying custom spawn config: ${error}`);
         }
     }
 
-    private applyLiveTarkovSpawns(raidAdjustments: IRaidChanges, mapConfig: any): void {
-        try {
-            const liveSettings = mapConfig.liveTarkovSettings;
-            if (!liveSettings) return;
-            
-            // Set raid start bot count (like live Tarkov)
-            if (raidAdjustments.botCountAdjustments) {
-                raidAdjustments.botCountAdjustments.min = liveSettings.raidStartBots || 0;
-                raidAdjustments.botCountAdjustments.max = liveSettings.raidStartBots || 0;
-            }
-
-            // Configure wave system for authentic timing
-            if (raidAdjustments.waveSettings) {
-                raidAdjustments.waveSettings.count = liveSettings.maxWaves || 0;
-                raidAdjustments.waveSettings.delay = liveSettings.waveDelay || 0;
-                raidAdjustments.waveSettings.botsPerWave = liveSettings.waveBots || 0;
-            }
-
-            // Apply live Tarkov behavior settings
-            this.applyLiveTarkovBehavior(raidAdjustments, mapConfig);
-
-            console.log(`[LiveTarkovAI] Applied live Tarkov spawns: ${liveSettings.raidStartBots} bots at start, ${liveSettings.maxWaves} waves`);
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying live Tarkov spawns: ${error}`);
-        }
-    }
-
-    private applyLiveTarkovBehavior(raidAdjustments: IRaidChanges, mapConfig: any): void {
-        try {
-            const liveSettings = mapConfig.liveTarkovSettings;
-            if (!liveSettings) return;
-            
-            // Apply scav behavior (annoying but not deadly - as per your preferences)
-            if (liveSettings.scavBehavior === "passive") {
-                // Reduce scav aggression and accuracy
-                this.modifyScavBehavior("passive");
-            } else if (liveSettings.scavBehavior === "aggressive") {
-                // Increase scav aggression but maintain balance
-                this.modifyScavBehavior("aggressive");
-            }
-
-            // Apply PMC behavior (tactical and tough - as per your preferences)
-            if (liveSettings.pmcBehavior === "tactical") {
-                // Balanced PMC behavior
-                this.modifyPMCBehavior("tactical");
-            } else if (liveSettings.pmcBehavior === "aggressive") {
-                // More aggressive PMCs
-                this.modifyPMCBehavior("aggressive");
-            }
-
-            console.log(`[LiveTarkovAI] Applied live Tarkov behavior: scavs=${liveSettings.scavBehavior}, pmcs=${liveSettings.pmcBehavior}`);
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying live Tarkov behavior: ${error}`);
-        }
-    }
-
+    // Modify bot types in the database
     private modifyBotTypes(): void {
         try {
-            if (!this.databaseServer) {
-                console.warn("[LiveTarkovAI] Database server not available, skipping bot type modifications");
-                return;
-            }
-
             const config = this.configManager.getConfig();
             const database = this.databaseServer.getTables();
             let modifiedCount = 0;
@@ -270,7 +157,7 @@ export class SpawnManager {
 
                 const dbBotType = database.bots.types[botType];
                 if (!dbBotType) {
-                    console.warn(`[LiveTarkovAI] Bot type ${botType} not found in database`);
+                    this.logger.warn(`[LiveTarkovAI] Bot type ${botType} not found in database`);
                     continue;
                 }
 
@@ -289,195 +176,314 @@ export class SpawnManager {
 
             // Show summary instead of individual logs
             if (modifiedCount > 0) {
-                console.log(`[LiveTarkovAI] Modified ${modifiedCount} bot types: ${modifiedTypes.join(', ')}`);
+                this.logger.info(`[LiveTarkovAI] Modified ${modifiedCount} bot types: ${modifiedTypes.join(', ')}`);
             }
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error modifying bot types: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error modifying bot types: ${error}`);
         }
     }
 
-    private modifyWaveSettings(raidAdjustments: IRaidChanges, mapConfig: any): void {
+    // Apply gear tier restrictions to bot types
+    private applyGearTierRestrictions(dbBotType: IBotType, botConfig: any): void {
         try {
-            const config = this.configManager.getConfig();
-            const waveSettings = config.waveSettings;
-            if (!waveSettings) return;
-
-            if (waveSettings.enabled) {
-                // Modify wave count
-                if (raidAdjustments.waveSettings) {
-                    raidAdjustments.waveSettings.count = waveSettings.waveCount || 0;
-                    raidAdjustments.waveSettings.delay = waveSettings.waveDelay || 0;
-                    raidAdjustments.waveSettings.botsPerWave = waveSettings.botsPerWave || 0;
-                }
-
-                // Apply dynamic scaling if enabled
-                if (waveSettings.dynamicScaling) {
-                    this.applyDynamicScaling(raidAdjustments, mapConfig);
-                }
-            }
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error modifying wave settings: ${error}`);
-        }
-    }
-
-    private applyBotTypeRestrictions(raidAdjustments: IRaidChanges, mapConfig: any): void {
-        try {
-            // Filter allowed bot types for this map
-            const allowedBotTypes = Object.entries(mapConfig.botTypes || {})
-                .filter(([_, config]) => config && typeof config === 'object' && 'enabled' in config && config.enabled)
-                .map(([type, _]) => type);
-
-            if (raidAdjustments.botTypeAdjustments) {
-                raidAdjustments.botTypeAdjustments.allowedTypes = allowedBotTypes;
-            }
-
-            // Apply spawn chances
-            for (const [botType, botConfig] of Object.entries(mapConfig.botTypes || {})) {
-                if (botConfig && typeof botConfig === 'object' && 'enabled' in botConfig && botConfig.enabled) {
-                    const spawnChance = 'spawnChance' in botConfig ? Number(botConfig.spawnChance) || 1.0 : 1.0;
-                    this.setBotTypeSpawnChance(botType, spawnChance);
-                }
-            }
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying bot type restrictions: ${error}`);
-        }
-    }
-
-    private applyGearTierRestrictions(dbBotType: any, botConfig: any): void {
-        try {
-            // Apply gear tier restrictions based on configuration
-            // This would modify the bot's equipment generation parameters
+            if (!botConfig.gearRestrictions) return;
             
-            // Note: Gear restrictions are applied silently
-            // Only log errors if something goes wrong
+            // Apply weapon tier restrictions
+            if (botConfig.gearRestrictions.weapons && botConfig.gearRestrictions.weapons.length > 0) {
+                // Store weapon restrictions for later use during bot generation
+                if (!dbBotType.weaponRestrictions) {
+                    dbBotType.weaponRestrictions = [];
+                }
+                dbBotType.weaponRestrictions.push(...botConfig.gearRestrictions.weapons);
+            }
+            
+            // Apply armor tier restrictions  
+            if (botConfig.gearRestrictions.armor && botConfig.gearRestrictions.armor.length > 0) {
+                if (!dbBotType.armorRestrictions) {
+                    dbBotType.armorRestrictions = [];
+                }
+                dbBotType.armorRestrictions.push(...botConfig.gearRestrictions.armor);
+            }
+            
+            // Apply item restrictions
+            if (botConfig.gearRestrictions.items && botConfig.gearRestrictions.items.length > 0) {
+                if (!dbBotType.itemRestrictions) {
+                    dbBotType.itemRestrictions = [];
+                }
+                dbBotType.itemRestrictions.push(...botConfig.gearRestrictions.items);
+            }
+            
+            // Apply level-based gear scaling
+            if (botConfig.levelProgression && botConfig.levelProgression.gearScaling) {
+                dbBotType.levelBasedGear = true;
+                dbBotType.minLevel = botConfig.levelProgression.minLevel || 1;
+                dbBotType.maxLevel = botConfig.levelProgression.maxLevel || 60;
+            }
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying gear restrictions: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying gear restrictions: ${error}`);
         }
     }
 
-    private applyDifficultySettings(dbBotType: any, botConfig: any): void {
+    // Apply difficulty settings to bot types
+    private applyDifficultySettings(dbBotType: IBotType, botConfig: any): void {
         try {
             if (!botConfig.difficulty) return;
             
-            // Apply difficulty-based behavior modifications
-            // This would modify the bot's AI difficulty parameters
-            
+            // Convert string difficulty to BotDifficulty enum
+            let difficulty: BotDifficulty;
             switch (botConfig.difficulty) {
                 case "easy":
-                    // Reduce accuracy, reaction time, etc.
+                    difficulty = BotDifficulty.EASY;
                     break;
                 case "normal":
-                    // Default settings
+                    difficulty = BotDifficulty.NORMAL;
                     break;
                 case "hard":
-                    // Increase accuracy, reaction time, etc.
+                    difficulty = BotDifficulty.HARD;
                     break;
                 case "impossible":
-                    // Maximum difficulty settings
+                    difficulty = BotDifficulty.IMPOSSIBLE;
                     break;
+                default:
+                    difficulty = BotDifficulty.NORMAL;
             }
+            
+            // Apply difficulty to bot type
+            dbBotType.Difficulty = difficulty;
+            
+            // Apply difficulty-based behavior modifications
+            this.applyDifficultyBasedBehavior(dbBotType, difficulty);
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying difficulty settings: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying difficulty settings: ${error}`);
         }
     }
 
-    private applyBotBehaviorSettings(dbBotType: any, botConfig: any): void {
+    // Apply difficulty-based behavior modifications
+    private applyDifficultyBasedBehavior(dbBotType: IBotType, difficulty: BotDifficulty): void {
+        try {
+            switch (difficulty) {
+                case BotDifficulty.EASY:
+                    // Reduce accuracy, reaction time, etc.
+                    if (!dbBotType.behaviorModifiers) {
+                        dbBotType.behaviorModifiers = {};
+                    }
+                    dbBotType.behaviorModifiers.accuracy = 0.3;
+                    dbBotType.behaviorModifiers.reactionTime = 2.0;
+                    dbBotType.behaviorModifiers.aggression = 0.4;
+                    break;
+                    
+                case BotDifficulty.NORMAL:
+                    // Default settings
+                    if (!dbBotType.behaviorModifiers) {
+                        dbBotType.behaviorModifiers = {};
+                    }
+                    dbBotType.behaviorModifiers.accuracy = 0.6;
+                    dbBotType.behaviorModifiers.reactionTime = 1.2;
+                    dbBotType.behaviorModifiers.aggression = 0.7;
+                    break;
+                    
+                case BotDifficulty.HARD:
+                    // Increase accuracy, reaction time, etc.
+                    if (!dbBotType.behaviorModifiers) {
+                        dbBotType.behaviorModifiers = {};
+                    }
+                    dbBotType.behaviorModifiers.accuracy = 0.8;
+                    dbBotType.behaviorModifiers.reactionTime = 0.8;
+                    dbBotType.behaviorModifiers.aggression = 0.9;
+                    break;
+                    
+                case BotDifficulty.IMPOSSIBLE:
+                    // Maximum difficulty settings
+                    if (!dbBotType.behaviorModifiers) {
+                        dbBotType.behaviorModifiers = {};
+                    }
+                    dbBotType.behaviorModifiers.accuracy = 0.95;
+                    dbBotType.behaviorModifiers.reactionTime = 0.3;
+                    dbBotType.behaviorModifiers.aggression = 1.0;
+                    break;
+            }
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error applying difficulty-based behavior: ${error}`);
+        }
+    }
+
+    // Apply live Tarkov behavior settings
+    private applyBotBehaviorSettings(dbBotType: IBotType, botConfig: any): void {
         try {
             const behavior = botConfig.liveTarkovBehavior;
             if (!behavior) return;
             
-            // Apply live Tarkov behavior settings
-            // This would modify the bot's AI behavior parameters
+            // Apply live Tarkov behavior settings to bot type
+            if (!dbBotType.liveTarkovBehavior) {
+                dbBotType.liveTarkovBehavior = {};
+            }
             
-            // Note: Individual behavior settings are applied silently
-            // Only log errors if something goes wrong
-        } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying bot behavior settings: ${error}`);
-        }
-    }
-
-    private modifyScavBehavior(behavior: string): void {
-        try {
-            // Modify scav behavior based on your preferences
-            // "annoying but not deadly"
+            // Apply accuracy
+            if (behavior.accuracy !== undefined) {
+                dbBotType.liveTarkovBehavior.accuracy = behavior.accuracy;
+            }
             
-            switch (behavior) {
-                case "passive":
-                    // Reduce scav accuracy and aggression
-                    console.log("[LiveTarkovAI] Applied passive scav behavior - annoying but not deadly");
-                    break;
-                case "aggressive":
-                    // Increase scav aggression but maintain balance
-                    console.log("[LiveTarkovAI] Applied aggressive scav behavior - challenging but fair");
-                    break;
-                case "mixed":
-                    // Balanced scav behavior
-                    console.log("[LiveTarkovAI] Applied mixed scav behavior - balanced challenge");
-                    break;
+            // Apply reaction time
+            if (behavior.reactionTime !== undefined) {
+                dbBotType.liveTarkovBehavior.reactionTime = behavior.reactionTime;
+            }
+            
+            // Apply aggression
+            if (behavior.aggression !== undefined) {
+                dbBotType.liveTarkovBehavior.aggression = behavior.aggression;
+            }
+            
+            // Apply hearing
+            if (behavior.hearing !== undefined) {
+                dbBotType.liveTarkovBehavior.hearing = behavior.hearing;
+            }
+            
+            // Apply vision
+            if (behavior.vision !== undefined) {
+                dbBotType.liveTarkovBehavior.vision = behavior.vision;
             }
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error modifying scav behavior: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying bot behavior settings: ${error}`);
         }
     }
 
-    private modifyPMCBehavior(behavior: string): void {
+    // Apply gear progression system
+    private applyGearProgression(): void {
         try {
-            // Modify PMC behavior based on your preferences
-            // "tough and tactical but not headshotty or insta-killing"
+            const config = this.configManager.getConfig();
+            const gearProgression = config.globalSettings?.gearProgression;
             
-            switch (behavior) {
-                case "tactical":
-                    // Balanced PMC behavior - tactical but fair
-                    console.log("[LiveTarkovAI] Applied tactical PMC behavior - tough but fair");
-                    break;
-                case "aggressive":
-                    // More aggressive PMCs but still balanced
-                    console.log("[LiveTarkovAI] Applied aggressive PMC behavior - challenging but fair");
-                    break;
-                case "defensive":
-                    // Defensive PMC behavior
-                    console.log("[LiveTarkovAI] Applied defensive PMC behavior - tactical defense");
-                    break;
+            if (!gearProgression || !gearProgression.enabled) return;
+            
+            this.logger.info("[LiveTarkovAI] Applying gear progression system...");
+            
+            // Apply level-based gear scaling to PMCs
+            this.applyPMCGearProgression(gearProgression);
+            
+            // Apply meta ammo enforcement
+            if (gearProgression.enforceMetaAmmo) {
+                this.applyMetaAmmoEnforcement(gearProgression);
+            }
+            
+            this.logger.info("[LiveTarkovAI] Gear progression system applied successfully");
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error applying gear progression: ${error}`);
+        }
+    }
+
+    // Apply PMC gear progression based on level
+    private applyPMCGearProgression(gearProgression: any): void {
+        try {
+            const database = this.databaseServer.getTables();
+            const pmcTypes = ["pmcbear", "pmcusec"];
+            
+            for (const pmcType of pmcTypes) {
+                const dbBotType = database.bots.types[pmcType];
+                if (!dbBotType) continue;
+                
+                // Set level-based gear scaling
+                dbBotType.levelBasedGear = true;
+                dbBotType.minLevel = 1;
+                dbBotType.maxLevel = 60;
+                
+                // Set high-tier threshold
+                if (gearProgression.minLevelForHighTier) {
+                    dbBotType.highTierThreshold = gearProgression.minLevelForHighTier;
+                }
+                
+                // Store gear progression data
+                if (!dbBotType.gearProgression) {
+                    dbBotType.gearProgression = {};
+                }
+                dbBotType.gearProgression.metaAmmoTypes = gearProgression.metaAmmoTypes || [];
+                dbBotType.gearProgression.highTierArmor = gearProgression.highTierArmor || [];
+                dbBotType.gearProgression.metaWeapons = gearProgression.metaWeapons || [];
             }
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error modifying PMC behavior: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying PMC gear progression: ${error}`);
         }
     }
 
-    private applyDynamicScaling(raidAdjustments: IRaidChanges, mapConfig: any): void {
+    // Apply meta ammo enforcement
+    private applyMetaAmmoEnforcement(gearProgression: any): void {
         try {
-            // Implement dynamic scaling based on player count, time, etc.
-            // This would adjust bot counts and difficulty dynamically
+            const database = this.databaseServer.getTables();
+            const pmcTypes = ["pmcbear", "pmcusec"];
             
-            // Example: Scale bot count based on time
-            const currentTime = Date.now();
-            const raidStartTime = currentTime; // This would come from raid data
-            
-            // Increase difficulty over time
-            const timeElapsed = (currentTime - raidStartTime) / 1000 / 60; // minutes
-            const difficultyMultiplier = Math.min(1.5, 1 + (timeElapsed / 30)); // Max 1.5x at 30 minutes
-            
-            if (raidAdjustments.botCountAdjustments) {
-                raidAdjustments.botCountAdjustments.max = Math.floor(
-                    (mapConfig.maxBots || 0) * difficultyMultiplier
-                );
+            for (const pmcType of pmcTypes) {
+                const dbBotType = database.bots.types[pmcType];
+                if (!dbBotType) continue;
+                
+                // Store meta ammo types for enforcement
+                if (!dbBotType.metaAmmoTypes) {
+                    dbBotType.metaAmmoTypes = [];
+                }
+                dbBotType.metaAmmoTypes.push(...(gearProgression.metaAmmoTypes || []));
             }
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error applying dynamic scaling: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error applying meta ammo enforcement: ${error}`);
         }
     }
 
-    private setBotTypeSpawnChance(botType: string, chance: number): void {
+    // Hook into SPT spawn service
+    public hookIntoSpawnService(spawnService: any): void {
         try {
-            // Set spawn chance for specific bot type
-            // Implementation depends on SPT version and available methods
+            if (!spawnService || typeof spawnService !== "object") return;
             
-            console.log(`[LiveTarkovAI] Applied spawn chance for ${botType}: ${chance}`);
+            // Store reference to spawn service
+            this.botSpawnService = spawnService;
+            
+            // Hook into spawn methods if they exist
+            if (spawnService.spawnBot && typeof spawnService.spawnBot === "function") {
+                const originalSpawnBot = spawnService.spawnBot;
+                spawnService.spawnBot = async (botType: string, location: string, count: number) => {
+                    // Apply our custom spawn logic before spawning
+                    const modifiedCount = this.calculateCustomBotCount(botType, location, count);
+                    const modifiedBotType = this.getModifiedBotType(botType);
+                    
+                    // Call original spawn method with our modifications
+                    return await originalSpawnBot.call(spawnService, modifiedBotType, location, modifiedCount);
+                };
+            }
+            
+            this.logger.info("[LiveTarkovAI] Successfully hooked into spawn service");
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error setting spawn chance: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error hooking into spawn service: ${error}`);
         }
     }
 
+    // Calculate custom bot count based on configuration
+    private calculateCustomBotCount(botType: string, location: string, originalCount: number): number {
+        try {
+            const config = this.configManager.getConfig();
+            const mapConfig = config.mapSettings[location];
+            
+            if (!mapConfig || !mapConfig.enabled) return originalCount;
+            
+            const botTypeConfig = mapConfig.botTypes[botType];
+            if (!botTypeConfig || !botTypeConfig.enabled) return 0;
+            
+            // Use configured max count or original count
+            return Math.min(botTypeConfig.maxCount, originalCount);
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error calculating custom bot count: ${error}`);
+            return originalCount;
+        }
+    }
+
+    // Get modified bot type based on configuration
+    private getModifiedBotType(originalBotType: string): string {
+        try {
+            // For now, return original bot type
+            // This can be enhanced to modify bot types based on configuration
+            return originalBotType;
+        } catch (error) {
+            this.logger.error(`[LiveTarkovAI] Error getting modified bot type: ${error}`);
+            return originalBotType;
+        }
+    }
+
+    // Get spawn statistics
     public getSpawnStatistics(): any {
         try {
             const config = this.configManager.getConfig();
@@ -518,7 +524,7 @@ export class SpawnManager {
 
             return stats;
         } catch (error) {
-            console.error(`[LiveTarkovAI] Error getting spawn statistics: ${error}`);
+            this.logger.error(`[LiveTarkovAI] Error getting spawn statistics: ${error}`);
             return {};
         }
     }
