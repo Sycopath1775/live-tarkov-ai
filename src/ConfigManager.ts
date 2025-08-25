@@ -79,6 +79,7 @@ export interface ISpawnConfig {
 export class ConfigManager {
     private config: ISpawnConfig;
     private configPath: string;
+    private enableGearProgression: boolean = true; // Default to enabled
 
     constructor() {
         this.configPath = path.join(__dirname, "../config/spawn-config.json");
@@ -121,6 +122,197 @@ export class ConfigManager {
     public isBotTypeEnabled(botType: string): boolean {
         const botConfig = this.getBotTypeConfig(botType);
         return botConfig?.enabled ?? false;
+    }
+
+    // Add missing methods for integration services
+    public loadHotZoneConfig(): any {
+        try {
+            // For now, return a basic hot zone config
+            // This can be expanded later with actual hot zone configuration
+            return {
+                enabled: true,
+                hotZones: {},
+                spawnDistribution: {
+                    enabled: true,
+                    minDistanceBetweenSpawns: 100,
+                    maxSpawnsPerZone: 3,
+                    zonePriority: { high: 1, medium: 2, low: 3 },
+                    spawnTiming: {
+                        initialSpawnDelay: 30,
+                        waveSpacing: 300,
+                        randomization: 60
+                    }
+                },
+                integration: {
+                    waypointsMod: true,
+                    bigBrainMod: true,
+                    useExistingPathfinding: true,
+                    preventStuckBots: true
+                }
+            };
+        } catch (error) {
+            console.error("[LiveTarkovAI] Error loading hot zone config:", error);
+            return this.getDefaultHotZoneConfig();
+        }
+    }
+
+    public getFikaIntegrationConfig(): any {
+        try {
+            return {
+                enabled: true,
+                multiplayerCompatibility: true,
+                playerScavHandling: true,
+                botBrainOptimization: true,
+                preventBotConflicts: true,
+                syncWithFikaBots: true,
+                itemDesyncPrevention: true
+            };
+        } catch (error) {
+            console.error("[LiveTarkovAI] Error getting Fika integration config:", error);
+            return this.getDefaultFikaConfig();
+        }
+    }
+
+    public getSainIntegrationConfig(): any {
+        try {
+            return {
+                enabled: true,
+                useSainBotBrains: true,
+                syncBotBehavior: true,
+                preventConflicts: true,
+                enhancedPathfinding: true,
+                tacticalMovement: true,
+                scavBehavior: {
+                    annoyingButNotDeadly: true,
+                    reducedAccuracy: 0.4,
+                    avoidHeadshots: true,
+                    preventStomachBlacking: true
+                },
+                pmcBehavior: {
+                    tacticalAndTough: true,
+                    realisticAccuracy: 0.75,
+                    avoidInstaKills: true,
+                    properGearUsage: true
+                },
+                bossBehavior: {
+                    toughButNotInstaKill: true,
+                    avoidHeadshotSpam: true,
+                    realisticDifficulty: true,
+                    properMechanics: true
+                }
+            };
+        } catch (error) {
+            console.error("[LiveTarkovAI] Error getting SAIN integration config:", error);
+            return this.getDefaultSainConfig();
+        }
+    }
+
+    public getBushShootingConfig(): any {
+        try {
+            return {
+                enabled: true,
+                preventShootingThroughBushes: true,
+                preventShootingFromBushes: true,
+                allowTrackingThroughBushes: true,
+                bushDetectionRange: 50,
+                lineOfSightCheck: true,
+                vegetationTypes: ["bush", "tree", "grass", "foliage"]
+            };
+        } catch (error) {
+            console.error("[LiveTarkovAI] Error getting bush shooting config:", error);
+            return this.getDefaultBushShootingConfig();
+        }
+    }
+
+    private getDefaultHotZoneConfig(): any {
+        return {
+            enabled: true,
+            hotZones: {},
+            spawnDistribution: {
+                enabled: true,
+                minDistanceBetweenSpawns: 100,
+                maxSpawnsPerZone: 3,
+                zonePriority: { high: 1, medium: 2, low: 3 },
+                spawnTiming: {
+                    initialSpawnDelay: 30,
+                    waveSpacing: 300,
+                    randomization: 60
+                }
+            },
+            integration: {
+                waypointsMod: true,
+                bigBrainMod: true,
+                useExistingPathfinding: true,
+                preventStuckBots: true
+            }
+        };
+    }
+
+    private getDefaultFikaConfig(): any {
+        return {
+            enabled: true,
+            multiplayerCompatibility: true,
+            playerScavHandling: true,
+            botBrainOptimization: true,
+            preventBotConflicts: true,
+            syncWithFikaBots: true,
+            itemDesyncPrevention: true
+        };
+    }
+
+    private getDefaultSainConfig(): any {
+        return {
+            enabled: true,
+            useSainBotBrains: true,
+            syncBotBehavior: true,
+            preventConflicts: true,
+            enhancedPathfinding: true,
+            tacticalMovement: true,
+            scavBehavior: {
+                annoyingButNotDeadly: true,
+                reducedAccuracy: 0.4,
+                avoidHeadshots: true,
+                preventStomachBlacking: true
+            },
+            pmcBehavior: {
+                tacticalAndTough: true,
+                realisticAccuracy: 0.75,
+                avoidInstaKills: true,
+                properGearUsage: true
+            },
+            bossBehavior: {
+                toughButNotInstaKill: true,
+                avoidHeadshotSpam: true,
+                realisticDifficulty: true,
+                properMechanics: true
+            }
+        };
+    }
+
+    private getDefaultBushShootingConfig(): any {
+        return {
+            enabled: true,
+            preventShootingThroughBushes: true,
+            preventShootingFromBushes: true,
+            allowTrackingThroughBushes: true,
+            bushDetectionRange: 50,
+            lineOfSightCheck: true,
+            vegetationTypes: ["bush", "tree", "grass", "foliage"]
+        };
+    }
+
+    // Set gear progression flag from main mod
+    public setGearProgressionEnabled(enabled: boolean): void {
+        this.enableGearProgression = enabled;
+        if (!enabled) {
+            console.log("[LiveTarkovAI] Gear progression system disabled - using external progression mod");
+        } else {
+            console.log("[LiveTarkovAI] Gear progression system enabled - using built-in progression");
+        }
+    }
+
+    public isGearProgressionEnabled(): boolean {
+        return this.enableGearProgression;
     }
 
     private loadConfig(): void {
