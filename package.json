@@ -1,6 +1,6 @@
 {
   "name": "Live Tarkov - AI",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Authentic live Tarkov AI spawning and behavior mod for SPT. Features realistic bot distribution, boss spawns, gear progression, and seamless integration with SAIN, Fika, BigBrain, and Waypoints.",
   "main": "src/mod.js",
   "scripts": {

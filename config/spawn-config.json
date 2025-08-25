@@ -11,6 +11,16 @@
             "minDistanceFromRegularSpawns": 100,
             "excludeRegularScavsInBossZones": true,
             "bossZoneRadius": 80
+        },
+        "gearProgression": {
+            "enabled": true,
+            "enforceMetaAmmo": true,
+            "levelBasedScaling": true,
+            "minLevelForHighTier": 15,
+            "maxLevelForLowTier": 20,
+            "metaAmmoTypes": ["7.62x39 BP", "5.56x45 M856A1", "5.45x39 BS", "7.62x51 M80", "9x39 BP"],
+            "highTierArmor": ["6B43", "6B23-1", "6B13", "IOTV Gen4", "Gzhel-K"],
+            "metaWeapons": ["AK-74M", "AK-101", "M4A1", "HK416", "SCAR-H", "SR-25"]
         }
     },
     "mapSettings": {
@@ -584,9 +594,14 @@
             "maxCount": 12,
             "allowedMaps": ["*"],
             "gearRestrictions": {
-                "weapons": [],
-                "armor": [],
-                "items": []
+                "weapons": ["low_tier_weapons", "mid_tier_weapons"],
+                "armor": ["low_tier_armor", "mid_tier_armor"],
+                "items": ["low_tier_ammo", "mid_tier_ammo"],
+                "levelProgression": {
+                    "minLevel": 1,
+                    "maxLevel": 30,
+                    "gearScaling": true
+                }
             },
             "liveTarkovBehavior": {
                 "accuracy": 0.6,
@@ -604,9 +619,14 @@
             "maxCount": 8,
             "allowedMaps": ["*"],
             "gearRestrictions": {
-                "weapons": [],
-                "armor": [],
-                "items": []
+                "weapons": ["mid_tier_weapons", "meta_weapons"],
+                "armor": ["mid_tier_armor", "high_tier_armor"],
+                "items": ["mid_tier_ammo", "meta_ammo", "high_tier_gear"],
+                "levelProgression": {
+                    "minLevel": 15,
+                    "maxLevel": 60,
+                    "gearScaling": true
+                }
             },
             "liveTarkovBehavior": {
                 "accuracy": 0.8,
@@ -624,9 +644,14 @@
             "maxCount": 8,
             "allowedMaps": ["*"],
             "gearRestrictions": {
-                "weapons": [],
-                "armor": [],
-                "items": []
+                "weapons": ["mid_tier_weapons", "meta_weapons"],
+                "armor": ["mid_tier_armor", "high_tier_armor"],
+                "items": ["mid_tier_ammo", "meta_ammo", "high_tier_gear"],
+                "levelProgression": {
+                    "minLevel": 15,
+                    "maxLevel": 60,
+                    "gearScaling": true
+                }
             },
             "liveTarkovBehavior": {
                 "accuracy": 0.8,
@@ -819,41 +844,41 @@
         "assaultgroup": {
             "enabled": true,
             "gearTier": 4,
-            "difficulty": "impossible",
+            "difficulty": "hard",
             "spawnChance": 0.15,
             "maxCount": 3,
             "allowedMaps": ["bigmap", "woods", "lighthouse", "shoreline"],
             "gearRestrictions": {
-                "weapons": [],
-                "armor": [],
-                "items": []
+                "weapons": ["meta_weapons"],
+                "armor": ["high_tier_armor"],
+                "items": ["meta_ammo", "high_tier_gear"]
             },
             "liveTarkovBehavior": {
-                "accuracy": 0.95,
-                "reactionTime": 0.3,
-                "aggression": 1.0,
-                "hearing": 1.0,
-                "vision": 1.0
+                "accuracy": 0.85,
+                "reactionTime": 0.5,
+                "aggression": 0.9,
+                "hearing": 0.9,
+                "vision": 0.9
             }
         },
         "partisan": {
             "enabled": true,
             "gearTier": 4,
-            "difficulty": "impossible",
+            "difficulty": "hard",
             "spawnChance": 0.15,
             "maxCount": 1,
             "allowedMaps": ["*"],
             "gearRestrictions": {
-                "weapons": [],
-                "armor": [],
-                "items": []
+                "weapons": ["meta_weapons"],
+                "armor": ["high_tier_armor"],
+                "items": ["meta_ammo", "high_tier_gear"]
             },
             "liveTarkovBehavior": {
-                "accuracy": 0.95,
-                "reactionTime": 0.3,
-                "aggression": 1.0,
-                "hearing": 1.0,
-                "vision": 1.0
+                "accuracy": 0.85,
+                "reactionTime": 0.5,
+                "aggression": 0.9,
+                "hearing": 0.9,
+                "vision": 0.9
             }
         }
     },

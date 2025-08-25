@@ -1,0 +1,3 @@
+[33md9fc3ad[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix esbuild version mismatch - update package.json to match package-lock.json
+[33me299013[m Fix GitHub Actions workflows and package.json scripts
+[33m1574dac[m Clean up folder structure - remove clutter and organize documentation
