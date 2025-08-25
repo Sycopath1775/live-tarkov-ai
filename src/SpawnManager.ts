@@ -1,4 +1,4 @@
-import { DatabaseServer, Logger, DependencyContainer, ILocationBase, IRaidChanges } from "./types/spt-types";
+import { DatabaseServer, Logger, DependencyContainer } from "./types/spt-types";
 import { ConfigManager } from "./ConfigManager";
 
 export class SpawnManager {
@@ -7,11 +7,8 @@ export class SpawnManager {
     private logger: Logger;
     private container: DependencyContainer;
     
-    // SPT Services for REAL spawn control
-    private botSpawnService: any;
-    private locationController: any;
-    private botHelper: any;
-    private botController: any;
+    // SPT Router Service for REAL spawn control
+    private staticRouterService: any;
 
     constructor(databaseServer: DatabaseServer, configManager: ConfigManager, logger: Logger, container: DependencyContainer) {
         this.databaseServer = databaseServer;
@@ -22,46 +19,293 @@ export class SpawnManager {
 
     public initialize(): void {
         try {
-            this.logger.info("Initializing REAL spawn control system...");
+            this.logger.info("Initializing REAL SPT router-based spawn control system...");
             
-            // Resolve SPT spawn services
-            this.resolveSpawnServices();
+            // Resolve SPT router service for REAL control
+            this.resolveRouterService();
             
-            // Apply custom spawn configurations
+            // Apply custom spawn configurations to database
             this.applyCustomSpawnConfig();
             
-            // Hook into SPT's spawn system for REAL control
-            this.hookIntoSpawnSystem();
+            // Register router hooks for REAL spawn control
+            this.registerSpawnRouterHooks();
             
-            this.logger.info("REAL spawn control system initialized successfully");
+            this.logger.info("REAL SPT router-based spawn control system initialized successfully");
         } catch (error) {
             this.logger.error(`Error initializing spawn system: ${error}`);
         }
     }
 
-    // Resolve SPT spawn services for REAL control
-    private resolveSpawnServices(): void {
+    // Resolve SPT router service for REAL control
+    private resolveRouterService(): void {
         try {
-            // Try to resolve SPT spawn services
-            this.botSpawnService = this.container.resolve("BotSpawnService");
-            this.locationController = this.container.resolve("LocationController");
-            this.botHelper = this.container.resolve("BotHelper");
-            this.botController = this.container.resolve("BotController");
+            this.staticRouterService = this.container.resolve("StaticRouterModService");
             
-            if (this.botSpawnService) {
-                this.logger.info("✓ BotSpawnService available - REAL spawn control enabled");
-            }
-            
-            if (this.locationController) {
-                this.logger.info("✓ LocationController available - Map spawn control enabled");
+            if (this.staticRouterService) {
+                this.logger.info("✓ StaticRouterModService available - REAL spawn control enabled");
+            } else {
+                this.logger.error("❌ StaticRouterModService not available - spawn control disabled");
             }
             
         } catch (error) {
-            this.logger.warn("Some SPT spawn services not available - limited functionality");
+            this.logger.error(`Error resolving router service: ${error}`);
         }
     }
 
-    // Apply custom spawn configurations to the database
+    // Register router hooks for REAL spawn control
+    private registerSpawnRouterHooks(): void {
+        try {
+            if (!this.staticRouterService) {
+                this.logger.warn("Router service not available - cannot register spawn hooks");
+                return;
+            }
+
+            // Register bot generation router hook
+            this.registerBotGenerationRouter();
+            
+            // Register raid start router hook
+            this.registerRaidStartRouter();
+            
+            // Register game start router hook
+            this.registerGameStartRouter();
+            
+            this.logger.info("All spawn router hooks registered successfully");
+            
+        } catch (error) {
+            this.logger.error(`Error registering router hooks: ${error}`);
+        }
+    }
+
+    // Register router hook for bot generation - REAL spawn control
+    private registerBotGenerationRouter(): void {
+        try {
+            this.staticRouterService.registerStaticRouter(
+                "LiveTarkovAI-BotGenerationRouter",
+                [
+                    {
+                        url: "/client/game/bot/generate",
+                        action: async (url: string, info: any, sessionId: string, output: string) => {
+                            try {
+                                // Parse the bot generation output
+                                const outputJSON = JSON.parse(output);
+                                
+                                // Apply Live Tarkov bot spawn rules
+                                const modifiedOutput = this.applyBotSpawnRules(outputJSON, info);
+                                
+                                this.logger.info(`Applied bot spawn rules for ${info.location || 'unknown location'}`);
+                                
+                                return JSON.stringify(modifiedOutput);
+                            } catch (error) {
+                                this.logger.error(`Error in bot generation router: ${error}`);
+                                return output; // Fallback to original
+                            }
+                        }
+                    }
+                ],
+                "LiveTarkovAI"
+            );
+            
+            this.logger.info("Bot generation router hook registered");
+            
+        } catch (error) {
+            this.logger.error(`Error registering bot generation router: ${error}`);
+        }
+    }
+
+    // Register router hook for raid start - REAL spawn control
+    private registerRaidStartRouter(): void {
+        try {
+            this.staticRouterService.registerStaticRouter(
+                "LiveTarkovAI-RaidStartRouter",
+                [
+                    {
+                        url: "/client/match/local/start",
+                        action: async (url: string, info: any, sessionId: string, output: string) => {
+                            try {
+                                // Parse the raid start output
+                                const outputJSON = JSON.parse(output);
+                                
+                                // Apply Live Tarkov raid spawn rules
+                                const modifiedOutput = this.applyRaidSpawnRules(outputJSON, info);
+                                
+                                this.logger.info(`Applied raid spawn rules for ${info.location || 'unknown location'}`);
+                                
+                                return JSON.stringify(modifiedOutput);
+                            } catch (error) {
+                                this.logger.error(`Error in raid start router: ${error}`);
+                                return output; // Fallback to original
+                            }
+                        }
+                    }
+                ],
+                "LiveTarkovAI"
+            );
+            
+            this.logger.info("Raid start router hook registered");
+            
+        } catch (error) {
+            this.logger.error(`Error registering raid start router: ${error}`);
+        }
+    }
+
+    // Register router hook for game start - REAL spawn control
+    private registerGameStartRouter(): void {
+        try {
+            this.staticRouterService.registerStaticRouter(
+                "LiveTarkovAI-GameStartRouter",
+                [
+                    {
+                        url: "/client/game/start",
+                        action: async (url: string, info: any, sessionId: string, output: string) => {
+                            try {
+                                // Parse the game start output
+                                const outputJSON = JSON.parse(output);
+                                
+                                // Apply Live Tarkov game spawn rules
+                                const modifiedOutput = this.applyGameSpawnRules(outputJSON, info);
+                                
+                                this.logger.info("Applied game spawn rules");
+                                
+                                return JSON.stringify(modifiedOutput);
+                            } catch (error) {
+                                this.logger.error(`Error in game start router: ${error}`);
+                                return output; // Fallback to original
+                            }
+                        }
+                    }
+                ],
+                "LiveTarkovAI"
+            );
+            
+            this.logger.info("Game start router hook registered");
+            
+        } catch (error) {
+            this.logger.error(`Error registering game start router: ${error}`);
+        }
+    }
+
+    // Apply Live Tarkov bot spawn rules - REAL spawn control
+    private applyBotSpawnRules(outputJSON: any, info: any): any {
+        try {
+            const config = this.configManager.getConfig();
+            const location = info.location?.toLowerCase();
+            const mapConfig = config.mapSettings?.[location];
+            
+            if (!mapConfig || !mapConfig.enabled) {
+                return outputJSON; // No config for this map
+            }
+            
+            const modifiedOutput = { ...outputJSON };
+            
+            // Apply bot count limits
+            if (mapConfig.maxBots && mapConfig.maxBots > 0) {
+                if (modifiedOutput.data && Array.isArray(modifiedOutput.data)) {
+                    // Limit the number of bots generated
+                    modifiedOutput.data = modifiedOutput.data.slice(0, mapConfig.maxBots);
+                }
+            }
+            
+            // Apply bot type restrictions
+            if (mapConfig.botTypes) {
+                const allowedTypes = Object.entries(mapConfig.botTypes)
+                    .filter(([_, config]: [string, any]) => config.enabled)
+                    .map(([type, _]: [string, any]) => type);
+                
+                if (allowedTypes.length > 0 && modifiedOutput.data && Array.isArray(modifiedOutput.data)) {
+                    // Filter bots to only allowed types
+                    modifiedOutput.data = modifiedOutput.data.filter((bot: any) => {
+                        const botType = bot.Role || bot.BotType;
+                        return allowedTypes.includes(botType);
+                    });
+                }
+            }
+            
+            return modifiedOutput;
+            
+        } catch (error) {
+            this.logger.error(`Error applying bot spawn rules: ${error}`);
+            return outputJSON;
+        }
+    }
+
+    // Apply Live Tarkov raid spawn rules - REAL spawn control
+    private applyRaidSpawnRules(outputJSON: any, info: any): any {
+        try {
+            const config = this.configManager.getConfig();
+            const location = info.location?.toLowerCase();
+            const mapConfig = config.mapSettings?.[location];
+            
+            if (!mapConfig || !mapConfig.enabled) {
+                return outputJSON; // No config for this map
+            }
+            
+            const modifiedOutput = { ...outputJSON };
+            
+            // Apply global bot limits
+            const globalSettings = config.globalSettings;
+            if (globalSettings) {
+                const maxBots = globalSettings.maxBotsPerRaid || 15;
+                const minBots = globalSettings.minBotsPerRaid || 6;
+                
+                // Modify raid configuration
+                if (modifiedOutput.data) {
+                    modifiedOutput.data.maxBots = maxBots;
+                    modifiedOutput.data.minBots = minBots;
+                }
+            }
+            
+            // Apply map-specific spawn settings
+            const liveTarkovSettings = mapConfig.liveTarkovSettings;
+            if (liveTarkovSettings) {
+                // Apply raid start bot count
+                if (liveTarkovSettings.raidStartBots && liveTarkovSettings.raidStartBots > 0) {
+                    if (modifiedOutput.data) {
+                        modifiedOutput.data.raidStartBots = liveTarkovSettings.raidStartBots;
+                    }
+                }
+                
+                // Apply wave settings
+                if (liveTarkovSettings.waveBots && liveTarkovSettings.maxWaves) {
+                    if (modifiedOutput.data) {
+                        modifiedOutput.data.waveBots = liveTarkovSettings.waveBots;
+                        modifiedOutput.data.maxWaves = liveTarkovSettings.maxWaves;
+                    }
+                }
+            }
+            
+            return modifiedOutput;
+            
+        } catch (error) {
+            this.logger.error(`Error applying raid spawn rules: ${error}`);
+            return outputJSON;
+        }
+    }
+
+    // Apply Live Tarkov game spawn rules - REAL spawn control
+    private applyGameSpawnRules(outputJSON: any, info: any): any {
+        try {
+            const config = this.configManager.getConfig();
+            const modifiedOutput = { ...outputJSON };
+            
+            // Apply global spawn settings
+            const globalSettings = config.globalSettings;
+            if (globalSettings) {
+                // Apply global spawn limits
+                if (modifiedOutput.data) {
+                    modifiedOutput.data.maxBots = globalSettings.maxBotsPerRaid || 15;
+                    modifiedOutput.data.minBots = globalSettings.minBotsPerRaid || 6;
+                }
+            }
+            
+            return modifiedOutput;
+            
+        } catch (error) {
+            this.logger.error(`Error applying game spawn rules: ${error}`);
+            return outputJSON;
+        }
+    }
+
+    // Apply custom spawn configurations to database
     public applyCustomSpawnConfig(): void {
         try {
             // Modify bot types in the database
@@ -75,322 +319,6 @@ export class SpawnManager {
             this.logger.info("Live Tarkov spawn configuration completed");
         } catch (error) {
             this.logger.error(`Error applying custom spawn config: ${error}`);
-        }
-    }
-
-    // Hook into SPT's spawn system for REAL control
-    private hookIntoSpawnSystem(): void {
-        try {
-            if (!this.botSpawnService) {
-                this.logger.warn("BotSpawnService not available - cannot hook into spawn system");
-                return;
-            }
-
-            // Hook into bot spawn events
-            this.hookIntoBotSpawning();
-            
-            // Hook into location spawn events
-            this.hookIntoLocationSpawning();
-            
-            // Apply spawn rate overrides
-            this.applySpawnRateOverrides();
-            
-            this.logger.info("Successfully hooked into SPT spawn system");
-            
-        } catch (error) {
-            this.logger.error(`Error hooking into spawn system: ${error}`);
-        }
-    }
-
-    // Hook into bot spawning events for REAL control
-    private hookIntoBotSpawning(): void {
-        try {
-            if (!this.botSpawnService || !this.botSpawnService.onBotSpawned) {
-                return;
-            }
-
-            // Hook into bot spawned event
-            this.botSpawnService.onBotSpawned = (bot: any, location: string) => {
-                this.onBotSpawned(bot, location);
-            };
-
-            // Hook into bot spawn request event
-            if (this.botSpawnService.onSpawnRequest) {
-                this.botSpawnService.onSpawnRequest = (request: any) => {
-                    return this.onSpawnRequest(request);
-                };
-            }
-
-            this.logger.info("Bot spawning hooks installed");
-            
-        } catch (error) {
-            this.logger.error(`Error hooking into bot spawning: ${error}`);
-        }
-    }
-
-    // Hook into location spawning events
-    private hookIntoLocationSpawning(): void {
-        try {
-            if (!this.locationController || !this.locationController.onLocationSpawn) {
-                return;
-            }
-
-            // Hook into location spawn event
-            this.locationController.onLocationSpawn = (location: string, raidChanges: IRaidChanges) => {
-                this.onLocationSpawn(location, raidChanges);
-            };
-
-            this.logger.info("Location spawning hooks installed");
-            
-        } catch (error) {
-            this.logger.error(`Error hooking into location spawning: ${error}`);
-        }
-    }
-
-    // Apply spawn rate overrides to SPT
-    private applySpawnRateOverrides(): void {
-        try {
-            const config = this.configManager.getConfig();
-            const globalSettings = config.globalSettings;
-            
-            if (!globalSettings) return;
-            
-            // Override global bot limits in SPT
-            const maxBots = globalSettings.maxBotsPerRaid || 15;
-            const minBots = globalSettings.minBotsPerRaid || 6;
-            
-            // Apply to SPT's spawn configuration
-            if (this.botSpawnService && this.botSpawnService.setMaxBots) {
-                this.botSpawnService.setMaxBots(maxBots);
-                this.botSpawnService.setMinBots(minBots);
-                this.logger.info(`Applied spawn limits: ${minBots}-${maxBots} bots per raid`);
-            }
-            
-        } catch (error) {
-            this.logger.error(`Error applying spawn rate overrides: ${error}`);
-        }
-    }
-
-    // Handle bot spawned event - REAL spawn control
-    private onBotSpawned(bot: any, location: string): void {
-        try {
-            const config = this.configManager.getConfig();
-            const mapConfig = config.mapSettings?.[location];
-            
-            if (!mapConfig || !mapConfig.enabled) return;
-            
-            // Apply map-specific spawn rules
-            this.applyMapSpawnRules(bot, location, mapConfig);
-            
-            // Apply boss exclusion zones
-            this.applyBossExclusionZones(bot, location, mapConfig);
-            
-        } catch (error) {
-            this.logger.error(`Error handling bot spawned event: ${error}`);
-        }
-    }
-
-    // Handle spawn request event - REAL spawn control
-    private onSpawnRequest(request: any): any {
-        try {
-            const config = this.configManager.getConfig();
-            const location = request.location;
-            const mapConfig = config.mapSettings?.[location];
-            
-            if (!mapConfig || !mapConfig.enabled) {
-                return request; // Allow default spawning
-            }
-            
-            // Modify spawn request based on Live Tarkov rules
-            const modifiedRequest = this.modifySpawnRequest(request, mapConfig);
-            
-            return modifiedRequest;
-            
-        } catch (error) {
-            this.logger.error(`Error handling spawn request: ${error}`);
-            return request; // Fallback to original request
-        }
-    }
-
-    // Handle location spawn event - REAL spawn control
-    private onLocationSpawn(location: string, raidChanges: IRaidChanges): void {
-        try {
-            const config = this.configManager.getConfig();
-            const mapConfig = config.mapSettings?.[location];
-            
-            if (!mapConfig || !mapConfig.enabled) return;
-            
-            // Apply map-specific raid changes
-            this.applyMapRaidChanges(location, raidChanges, mapConfig);
-            
-        } catch (error) {
-            this.logger.error(`Error handling location spawn: ${error}`);
-        }
-    }
-
-    // Apply map-specific spawn rules to spawned bots
-    private applyMapSpawnRules(bot: any, location: string, mapConfig: any): void {
-        try {
-            const botTypes = mapConfig.botTypes;
-            if (!botTypes) return;
-            
-            const botType = bot.Role || bot.BotType;
-            const botConfig = botTypes[botType];
-            
-            if (!botConfig || !botConfig.enabled) return;
-            
-            // Apply difficulty overrides
-            if (botConfig.difficulty) {
-                bot.Difficulty = botConfig.difficulty;
-            }
-            
-            // Apply gear restrictions
-            if (botConfig.gearRestrictions) {
-                this.applyGearRestrictionsToBot(bot, botConfig.gearRestrictions);
-            }
-            
-        } catch (error) {
-            this.logger.error(`Error applying map spawn rules: ${error}`);
-        }
-    }
-
-    // Apply boss exclusion zones - REAL spawn control
-    private applyBossExclusionZones(bot: any, location: string, mapConfig: any): void {
-        try {
-            const bossExclusionZones = mapConfig.bossExclusionZones;
-            if (!bossExclusionZones) return;
-            
-            // Check if this bot is in a boss exclusion zone
-            for (const zone of bossExclusionZones) {
-                if (this.isBotInZone(bot, zone)) {
-                    // Prevent regular scavs from spawning in boss zones
-                    if (bot.Role === "assault" && zone.excludeRegularScavs) {
-                        this.logger.info(`Prevented regular scav spawn in boss zone: ${zone.name}`);
-                        // Remove the bot from the raid
-                        this.removeBotFromRaid(bot);
-                        return;
-                    }
-                }
-            }
-            
-        } catch (error) {
-            this.logger.error(`Error applying boss exclusion zones: ${error}`);
-        }
-    }
-
-    // Modify spawn request based on Live Tarkov rules
-    private modifySpawnRequest(request: any, mapConfig: any): any {
-        try {
-            const modifiedRequest = { ...request };
-            
-            // Apply bot count limits
-            if (mapConfig.maxBots && mapConfig.maxBots > 0) {
-                modifiedRequest.maxBots = Math.min(request.maxBots || 20, mapConfig.maxBots);
-            }
-            
-            if (mapConfig.minBots && mapConfig.minBots > 0) {
-                modifiedRequest.minBots = Math.max(request.minBots || 5, mapConfig.minBots);
-            }
-            
-            // Apply bot type restrictions
-            if (mapConfig.botTypes) {
-                const allowedTypes = Object.entries(mapConfig.botTypes)
-                    .filter(([_, config]: [string, any]) => config.enabled)
-                    .map(([type, _]: [string, any]) => type);
-                
-                if (allowedTypes.length > 0) {
-                    modifiedRequest.allowedBotTypes = allowedTypes;
-                }
-            }
-            
-            return modifiedRequest;
-            
-        } catch (error) {
-            this.logger.error(`Error modifying spawn request: ${error}`);
-            return request;
-        }
-    }
-
-    // Apply map-specific raid changes
-    private applyMapRaidChanges(location: string, raidChanges: IRaidChanges, mapConfig: any): void {
-        try {
-            const liveTarkovSettings = mapConfig.liveTarkovSettings;
-            if (!liveTarkovSettings) return;
-            
-            // Apply raid start bot count
-            if (liveTarkovSettings.raidStartBots && liveTarkovSettings.raidStartBots > 0) {
-                raidChanges.botCountAdjustments = {
-                    min: liveTarkovSettings.raidStartBots,
-                    max: liveTarkovSettings.raidStartBots
-                };
-            }
-            
-            // Apply wave settings
-            if (liveTarkovSettings.waveBots && liveTarkovSettings.maxWaves) {
-                raidChanges.waveSettings = {
-                    count: liveTarkovSettings.maxWaves,
-                    delay: 300, // 5 minutes between waves
-                    botsPerWave: liveTarkovSettings.waveBots
-                };
-            }
-            
-            this.logger.info(`Applied raid changes for ${location}`);
-            
-        } catch (error) {
-            this.logger.error(`Error applying map raid changes: ${error}`);
-        }
-    }
-
-    // Check if bot is in a specific zone
-    private isBotInZone(bot: any, zone: any): boolean {
-        try {
-            // Simple distance check - in real implementation this would use proper zone boundaries
-            const botPos = bot.Position || { x: 0, y: 0, z: 0 };
-            const zoneCenter = zone.center || { x: 0, y: 0, z: 0 };
-            const radius = zone.radius || 100;
-            
-            const distance = Math.sqrt(
-                Math.pow(botPos.x - zoneCenter.x, 2) +
-                Math.pow(botPos.y - zoneCenter.y, 2) +
-                Math.pow(botPos.z - zoneCenter.z, 2)
-            );
-            
-            return distance <= radius;
-            
-        } catch (error) {
-            this.logger.error(`Error checking bot zone: ${error}`);
-            return false;
-        }
-    }
-
-    // Remove bot from raid (for exclusion zones)
-    private removeBotFromRaid(bot: any): void {
-        try {
-            if (this.botController && this.botController.removeBot) {
-                this.botController.removeBot(bot._id);
-            }
-        } catch (error) {
-            this.logger.error(`Error removing bot from raid: ${error}`);
-        }
-    }
-
-    // Apply gear restrictions to spawned bot
-    private applyGearRestrictionsToBot(bot: any, restrictions: any): void {
-        try {
-            if (!bot.inventory) return;
-            
-            // Apply weapon restrictions
-            if (restrictions.weapons && bot.inventory.equipment) {
-                bot.inventory.equipment.weapon = restrictions.weapons;
-            }
-            
-            // Apply armor restrictions
-            if (restrictions.armor && bot.inventory.equipment) {
-                bot.inventory.equipment.armor = restrictions.armor;
-            }
-            
-        } catch (error) {
-            this.logger.error(`Error applying gear restrictions to bot: ${error}`);
         }
     }
 
@@ -600,8 +528,8 @@ export class SpawnManager {
                 totalBots: 0,
                 modifiedBots: 0,
                 gearProgressionEnabled: this.configManager.isGearProgressionEnabled(),
-                spawnControlEnabled: !!this.botSpawnService,
-                locationControlEnabled: !!this.locationController
+                spawnControlEnabled: !!this.staticRouterService,
+                locationControlEnabled: false // No direct location controller exposed here
             };
             
             return stats;
