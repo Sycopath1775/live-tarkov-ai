@@ -1,6 +1,6 @@
+import { DatabaseServer, Logger } from "./types/spt-types";
 import { ConfigManager } from "./ConfigManager";
 import {
-    DatabaseServer,
     BotHelper,
     BotEquipmentModService,
     BotModificationService,
@@ -9,7 +9,6 @@ import {
     RandomUtil,
     TimeUtil,
     ItemHelper,
-    Logger,
     IBotType,
     IBotBase,
     BotDifficulty,

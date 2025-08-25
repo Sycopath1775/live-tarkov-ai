@@ -21,7 +21,7 @@ __export(SpawnManager_exports, {
 });
 module.exports = __toCommonJS(SpawnManager_exports);
 var import_ConfigManager = require("./ConfigManager");
-var import_spt_types = require("./types/spt-types");
+var import_spt_types2 = require("./types/spt-types");
 class SpawnManager {
   databaseServer;
   botHelper;
@@ -178,19 +178,19 @@ class SpawnManager {
       let difficulty;
       switch (botConfig.difficulty) {
         case "easy":
-          difficulty = import_spt_types.BotDifficulty.EASY;
+          difficulty = import_spt_types2.BotDifficulty.EASY;
           break;
         case "normal":
-          difficulty = import_spt_types.BotDifficulty.NORMAL;
+          difficulty = import_spt_types2.BotDifficulty.NORMAL;
           break;
         case "hard":
-          difficulty = import_spt_types.BotDifficulty.HARD;
+          difficulty = import_spt_types2.BotDifficulty.HARD;
           break;
         case "impossible":
-          difficulty = import_spt_types.BotDifficulty.IMPOSSIBLE;
+          difficulty = import_spt_types2.BotDifficulty.IMPOSSIBLE;
           break;
         default:
-          difficulty = import_spt_types.BotDifficulty.NORMAL;
+          difficulty = import_spt_types2.BotDifficulty.NORMAL;
       }
       dbBotType.Difficulty = difficulty;
       this.applyDifficultyBasedBehavior(dbBotType, difficulty);
@@ -202,7 +202,7 @@ class SpawnManager {
   applyDifficultyBasedBehavior(dbBotType, difficulty) {
     try {
       switch (difficulty) {
-        case import_spt_types.BotDifficulty.EASY:
+        case import_spt_types2.BotDifficulty.EASY:
           if (!dbBotType.behaviorModifiers) {
             dbBotType.behaviorModifiers = {};
           }
@@ -210,7 +210,7 @@ class SpawnManager {
           dbBotType.behaviorModifiers.reactionTime = 2;
           dbBotType.behaviorModifiers.aggression = 0.4;
           break;
-        case import_spt_types.BotDifficulty.NORMAL:
+        case import_spt_types2.BotDifficulty.NORMAL:
           if (!dbBotType.behaviorModifiers) {
             dbBotType.behaviorModifiers = {};
           }
@@ -218,7 +218,7 @@ class SpawnManager {
           dbBotType.behaviorModifiers.reactionTime = 1.2;
           dbBotType.behaviorModifiers.aggression = 0.7;
           break;
-        case import_spt_types.BotDifficulty.HARD:
+        case import_spt_types2.BotDifficulty.HARD:
           if (!dbBotType.behaviorModifiers) {
             dbBotType.behaviorModifiers = {};
           }
@@ -226,7 +226,7 @@ class SpawnManager {
           dbBotType.behaviorModifiers.reactionTime = 0.8;
           dbBotType.behaviorModifiers.aggression = 0.9;
           break;
-        case import_spt_types.BotDifficulty.IMPOSSIBLE:
+        case import_spt_types2.BotDifficulty.IMPOSSIBLE:
           if (!dbBotType.behaviorModifiers) {
             dbBotType.behaviorModifiers = {};
           }
