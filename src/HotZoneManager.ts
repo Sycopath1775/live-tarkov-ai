@@ -1,4 +1,3 @@
-import { injectable } from "tsyringe";
 import { ConfigManager } from "./ConfigManager";
 
 export interface IHotZone {
@@ -40,7 +39,6 @@ export interface IHotZoneConfig {
     };
 }
 
-@injectable()
 export class HotZoneManager {
     private hotZoneConfig: IHotZoneConfig;
     private activeSpawns: Map<string, any[]> = new Map();

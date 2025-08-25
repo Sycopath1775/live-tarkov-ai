@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe";
+// Removed tsyringe dependency for SPT compatibility
 
 export interface IBushShootingConfig {
     enabled: boolean;
@@ -10,7 +10,6 @@ export interface IBushShootingConfig {
     vegetationTypes: string[];
 }
 
-@injectable()
 export class BushShootingService {
     private config: IBushShootingConfig;
     private activeBushes: Map<string, any> = new Map();

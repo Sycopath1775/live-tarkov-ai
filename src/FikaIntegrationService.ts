@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe";
+// Removed tsyringe dependency for SPT compatibility
 
 export interface IFikaIntegrationConfig {
     enabled: boolean;
@@ -10,7 +10,6 @@ export interface IFikaIntegrationConfig {
     itemDesyncPrevention: boolean;
 }
 
-@injectable()
 export class FikaIntegrationService {
     private config: IFikaIntegrationConfig;
     private isFikaActive: boolean = false;

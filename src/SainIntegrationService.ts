@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe";
+// Removed tsyringe dependency for SPT compatibility
 
 export interface ISainIntegrationConfig {
     enabled: boolean;
@@ -27,7 +27,6 @@ export interface ISainIntegrationConfig {
     };
 }
 
-@injectable()
 export class SainIntegrationService {
     private config: ISainIntegrationConfig;
     private isSainActive: boolean = false;
