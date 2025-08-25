@@ -86,17 +86,32 @@ export class SpawnManager {
                         url: "/client/game/bot/generate",
                         action: async (url: string, info: any, sessionId: string, output: string) => {
                             try {
+                                // RESEARCH: Log the actual data structures we're intercepting
+                                this.logger.info("=== BOT GENERATION ROUTER INTERCEPTED ===");
+                                this.logger.info(`URL: ${url}`);
+                                this.logger.info(`Session ID: ${sessionId}`);
+                                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                                this.logger.info(`Output length: ${output.length} characters`);
+                                
                                 // Parse the bot generation output
                                 const outputJSON = JSON.parse(output);
+                                
+                                // RESEARCH: Log the actual output structure
+                                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                                
+                                // RESEARCH: Analyze what we can actually control
+                                this.analyzeBotGenerationData(outputJSON, info);
                                 
                                 // Apply Live Tarkov bot spawn rules
                                 const modifiedOutput = this.applyBotSpawnRules(outputJSON, info);
                                 
                                 this.logger.info(`Applied bot spawn rules for ${info.location || 'unknown location'}`);
+                                this.logger.info("=== BOT GENERATION ROUTER COMPLETED ===");
                                 
                                 return JSON.stringify(modifiedOutput);
                             } catch (error) {
                                 this.logger.error(`Error in bot generation router: ${error}`);
+                                this.logger.error(`Stack trace: ${error.stack}`);
                                 return output; // Fallback to original
                             }
                         }
@@ -122,17 +137,32 @@ export class SpawnManager {
                         url: "/client/match/local/start",
                         action: async (url: string, info: any, sessionId: string, output: string) => {
                             try {
+                                // RESEARCH: Log the actual data structures we're intercepting
+                                this.logger.info("=== RAID START ROUTER INTERCEPTED ===");
+                                this.logger.info(`URL: ${url}`);
+                                this.logger.info(`Session ID: ${sessionId}`);
+                                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                                this.logger.info(`Output length: ${output.length} characters`);
+                                
                                 // Parse the raid start output
                                 const outputJSON = JSON.parse(output);
+                                
+                                // RESEARCH: Log the actual output structure
+                                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                                
+                                // RESEARCH: Analyze what we can actually control
+                                this.analyzeRaidStartData(outputJSON, info);
                                 
                                 // Apply Live Tarkov raid spawn rules
                                 const modifiedOutput = this.applyRaidSpawnRules(outputJSON, info);
                                 
                                 this.logger.info(`Applied raid spawn rules for ${info.location || 'unknown location'}`);
+                                this.logger.info("=== RAID START ROUTER COMPLETED ===");
                                 
                                 return JSON.stringify(modifiedOutput);
                             } catch (error) {
                                 this.logger.error(`Error in raid start router: ${error}`);
+                                this.logger.error(`Stack trace: ${error.stack}`);
                                 return output; // Fallback to original
                             }
                         }
@@ -158,17 +188,32 @@ export class SpawnManager {
                         url: "/client/game/start",
                         action: async (url: string, info: any, sessionId: string, output: string) => {
                             try {
+                                // RESEARCH: Log the actual data structures we're intercepting
+                                this.logger.info("=== GAME START ROUTER INTERCEPTED ===");
+                                this.logger.info(`URL: ${url}`);
+                                this.logger.info(`Session ID: ${sessionId}`);
+                                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                                this.logger.info(`Output length: ${output.length} characters`);
+                                
                                 // Parse the game start output
                                 const outputJSON = JSON.parse(output);
+                                
+                                // RESEARCH: Log the actual output structure
+                                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                                
+                                // RESEARCH: Analyze what we can actually control
+                                this.analyzeGameStartData(outputJSON, info);
                                 
                                 // Apply Live Tarkov game spawn rules
                                 const modifiedOutput = this.applyGameSpawnRules(outputJSON, info);
                                 
                                 this.logger.info("Applied game spawn rules");
+                                this.logger.info("=== GAME START ROUTER COMPLETED ===");
                                 
                                 return JSON.stringify(modifiedOutput);
                             } catch (error) {
                                 this.logger.error(`Error in game start router: ${error}`);
+                                this.logger.error(`Stack trace: ${error.stack}`);
                                 return output; // Fallback to original
                             }
                         }
@@ -518,6 +563,190 @@ export class SpawnManager {
             }
         } catch (error) {
             this.logger.error(`Error applying meta ammo enforcement: ${error}`);
+        }
+    }
+
+    // RESEARCH: Analyze bot generation data structure to understand what we can control
+    private analyzeBotGenerationData(outputJSON: any, info: any): void {
+        try {
+            this.logger.info("=== BOT GENERATION DATA ANALYSIS ===");
+            
+            // Analyze the info parameter
+            this.logger.info("Info parameter analysis:");
+            this.logger.info(`- Location: ${info.location || 'undefined'}`);
+            this.logger.info(`- Info keys: ${Object.keys(info).join(', ')}`);
+            
+            // Analyze the output structure
+            this.logger.info("Output structure analysis:");
+            this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(', ')}`);
+            
+            if (outputJSON.data) {
+                this.logger.info(`- Data type: ${Array.isArray(outputJSON.data) ? 'Array' : typeof outputJSON.data}`);
+                if (Array.isArray(outputJSON.data)) {
+                    this.logger.info(`- Data length: ${outputJSON.data.length}`);
+                    if (outputJSON.data.length > 0) {
+                        this.logger.info(`- First bot structure: ${JSON.stringify(outputJSON.data[0], null, 2)}`);
+                    }
+                }
+            }
+            
+            // Look for spawn-related fields
+            this.logger.info("Looking for spawn-related fields...");
+            this.findSpawnRelatedFields(outputJSON, "Output");
+            this.findSpawnRelatedFields(info, "Info");
+            
+            this.logger.info("=== BOT GENERATION ANALYSIS COMPLETED ===");
+        } catch (error) {
+            this.logger.error(`Error analyzing bot generation data: ${error}`);
+        }
+    }
+
+    // RESEARCH: Analyze raid start data structure to understand what we can control
+    private analyzeRaidStartData(outputJSON: any, info: any): void {
+        try {
+            this.logger.info("=== RAID START DATA ANALYSIS ===");
+            
+            // Analyze the info parameter
+            this.logger.info("Info parameter analysis:");
+            this.logger.info(`- Location: ${info.location || 'undefined'}`);
+            this.logger.info(`- Info keys: ${Object.keys(info).join(', ')}`);
+            
+            // Analyze the output structure
+            this.logger.info("Output structure analysis:");
+            this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(', ')}`);
+            
+            // Look for spawn-related fields
+            this.logger.info("Looking for spawn-related fields...");
+            this.findSpawnRelatedFields(outputJSON, "Output");
+            this.findSpawnRelatedFields(info, "Info");
+            
+            this.logger.info("=== RAID START ANALYSIS COMPLETED ===");
+        } catch (error) {
+            this.logger.error(`Error analyzing raid start data: ${error}`);
+        }
+    }
+
+    // RESEARCH: Analyze game start data structure to understand what we can control
+    private analyzeGameStartData(outputJSON: any, info: any): void {
+        try {
+            this.logger.info("=== GAME START DATA ANALYSIS ===");
+            
+            // Analyze the info parameter
+            this.logger.info("Info parameter analysis:");
+            this.logger.info(`- Info keys: ${Object.keys(info).join(', ')}`);
+            
+            // Analyze the output structure
+            this.logger.info("Output structure analysis:");
+            this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(', ')}`);
+            
+            // Look for spawn-related fields
+            this.logger.info("Looking for spawn-related fields...");
+            this.findSpawnRelatedFields(outputJSON, "Output");
+            this.findSpawnRelatedFields(info, "Info");
+            
+            this.logger.info("=== GAME START ANALYSIS COMPLETED ===");
+        } catch (error) {
+            this.logger.error(`Error analyzing game start data: ${error}`);
+        }
+    }
+
+    // RESEARCH: Find fields that might be related to spawning
+    private findSpawnRelatedFields(data: any, context: string): void {
+        try {
+            const spawnKeywords = [
+                'spawn', 'bot', 'location', 'position', 'count', 'limit', 'max', 'min',
+                'wave', 'time', 'delay', 'zone', 'area', 'exclude', 'include', 'type',
+                'role', 'difficulty', 'gear', 'equipment', 'inventory'
+            ];
+            
+            this.logger.info(`Searching for spawn-related fields in ${context}:`);
+            
+            const foundFields: string[] = [];
+            this.searchForKeywords(data, spawnKeywords, foundFields, '');
+            
+            if (foundFields.length > 0) {
+                this.logger.info(`Found spawn-related fields: ${foundFields.join(', ')}`);
+            } else {
+                this.logger.info("No obvious spawn-related fields found");
+            }
+        } catch (error) {
+            this.logger.error(`Error searching for spawn-related fields: ${error}`);
+        }
+    }
+
+    // RESEARCH: Recursively search for keywords in nested objects
+    private searchForKeywords(data: any, keywords: string[], foundFields: string[], path: string): void {
+        try {
+            if (typeof data === 'object' && data !== null) {
+                for (const [key, value] of Object.entries(data)) {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    
+                    // Check if this key contains any of our keywords
+                    const lowerKey = key.toLowerCase();
+                    for (const keyword of keywords) {
+                        if (lowerKey.includes(keyword)) {
+                            foundFields.push(currentPath);
+                            this.logger.info(`Found spawn-related field: ${currentPath} = ${JSON.stringify(value)}`);
+                            break;
+                        }
+                    }
+                    
+                    // Recursively search nested objects
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        this.searchForKeywords(value, keywords, foundFields, currentPath);
+                    }
+                }
+            }
+        } catch (error) {
+            this.logger.error(`Error in keyword search: ${error}`);
+        }
+    }
+
+    // SAFETY: Validate that our modifications don't break SPT's data structure
+    private validateModifiedData(originalData: any, modifiedData: any, context: string): boolean {
+        try {
+            // Basic structure validation
+            if (typeof originalData !== typeof modifiedData) {
+                this.logger.error(`${context}: Data type mismatch - original: ${typeof originalData}, modified: ${typeof modifiedData}`);
+                return false;
+            }
+
+            // Array length validation for bot data
+            if (Array.isArray(originalData.data) && Array.isArray(modifiedData.data)) {
+                if (modifiedData.data.length > originalData.data.length) {
+                    this.logger.warn(`${context}: Modified data has more bots than original - this might cause issues`);
+                }
+            }
+
+            // Required field validation
+            const requiredFields = ['data', 'err', 'errmsg'];
+            for (const field of requiredFields) {
+                if (originalData.hasOwnProperty(field) && !modifiedData.hasOwnProperty(field)) {
+                    this.logger.error(`${context}: Required field '${field}' missing from modified data`);
+                    return false;
+                }
+            }
+
+            this.logger.info(`${context}: Data validation passed`);
+            return true;
+        } catch (error) {
+            this.logger.error(`${context}: Data validation failed: ${error}`);
+            return false;
+        }
+    }
+
+    // SAFETY: Add performance monitoring to our spawn rule methods
+    private measurePerformance<T>(operation: string, func: () => T): T {
+        const startTime = Date.now();
+        try {
+            const result = func();
+            const endTime = Date.now();
+            this.logger.info(`${operation} completed in ${endTime - startTime}ms`);
+            return result;
+        } catch (error) {
+            const endTime = Date.now();
+            this.logger.error(`${operation} failed after ${endTime - startTime}ms: ${error}`);
+            throw error;
         }
     }
 

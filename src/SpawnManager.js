@@ -82,12 +82,21 @@ class SpawnManager {
             url: "/client/game/bot/generate",
             action: async (url, info, sessionId, output) => {
               try {
+                this.logger.info("=== BOT GENERATION ROUTER INTERCEPTED ===");
+                this.logger.info(`URL: ${url}`);
+                this.logger.info(`Session ID: ${sessionId}`);
+                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                this.logger.info(`Output length: ${output.length} characters`);
                 const outputJSON = JSON.parse(output);
+                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                this.analyzeBotGenerationData(outputJSON, info);
                 const modifiedOutput = this.applyBotSpawnRules(outputJSON, info);
                 this.logger.info(`Applied bot spawn rules for ${info.location || "unknown location"}`);
+                this.logger.info("=== BOT GENERATION ROUTER COMPLETED ===");
                 return JSON.stringify(modifiedOutput);
               } catch (error) {
                 this.logger.error(`Error in bot generation router: ${error}`);
+                this.logger.error(`Stack trace: ${error.stack}`);
                 return output;
               }
             }
@@ -110,12 +119,21 @@ class SpawnManager {
             url: "/client/match/local/start",
             action: async (url, info, sessionId, output) => {
               try {
+                this.logger.info("=== RAID START ROUTER INTERCEPTED ===");
+                this.logger.info(`URL: ${url}`);
+                this.logger.info(`Session ID: ${sessionId}`);
+                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                this.logger.info(`Output length: ${output.length} characters`);
                 const outputJSON = JSON.parse(output);
+                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                this.analyzeRaidStartData(outputJSON, info);
                 const modifiedOutput = this.applyRaidSpawnRules(outputJSON, info);
                 this.logger.info(`Applied raid spawn rules for ${info.location || "unknown location"}`);
+                this.logger.info("=== RAID START ROUTER COMPLETED ===");
                 return JSON.stringify(modifiedOutput);
               } catch (error) {
                 this.logger.error(`Error in raid start router: ${error}`);
+                this.logger.error(`Stack trace: ${error.stack}`);
                 return output;
               }
             }
@@ -138,12 +156,21 @@ class SpawnManager {
             url: "/client/game/start",
             action: async (url, info, sessionId, output) => {
               try {
+                this.logger.info("=== GAME START ROUTER INTERCEPTED ===");
+                this.logger.info(`URL: ${url}`);
+                this.logger.info(`Session ID: ${sessionId}`);
+                this.logger.info(`Info object structure: ${JSON.stringify(info, null, 2)}`);
+                this.logger.info(`Output length: ${output.length} characters`);
                 const outputJSON = JSON.parse(output);
+                this.logger.info(`Output JSON structure: ${JSON.stringify(outputJSON, null, 2)}`);
+                this.analyzeGameStartData(outputJSON, info);
                 const modifiedOutput = this.applyGameSpawnRules(outputJSON, info);
                 this.logger.info("Applied game spawn rules");
+                this.logger.info("=== GAME START ROUTER COMPLETED ===");
                 return JSON.stringify(modifiedOutput);
               } catch (error) {
                 this.logger.error(`Error in game start router: ${error}`);
+                this.logger.error(`Stack trace: ${error.stack}`);
                 return output;
               }
             }
@@ -398,6 +425,166 @@ class SpawnManager {
       }
     } catch (error) {
       this.logger.error(`Error applying meta ammo enforcement: ${error}`);
+    }
+  }
+  // RESEARCH: Analyze bot generation data structure to understand what we can control
+  analyzeBotGenerationData(outputJSON, info) {
+    try {
+      this.logger.info("=== BOT GENERATION DATA ANALYSIS ===");
+      this.logger.info("Info parameter analysis:");
+      this.logger.info(`- Location: ${info.location || "undefined"}`);
+      this.logger.info(`- Info keys: ${Object.keys(info).join(", ")}`);
+      this.logger.info("Output structure analysis:");
+      this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(", ")}`);
+      if (outputJSON.data) {
+        this.logger.info(`- Data type: ${Array.isArray(outputJSON.data) ? "Array" : typeof outputJSON.data}`);
+        if (Array.isArray(outputJSON.data)) {
+          this.logger.info(`- Data length: ${outputJSON.data.length}`);
+          if (outputJSON.data.length > 0) {
+            this.logger.info(`- First bot structure: ${JSON.stringify(outputJSON.data[0], null, 2)}`);
+          }
+        }
+      }
+      this.logger.info("Looking for spawn-related fields...");
+      this.findSpawnRelatedFields(outputJSON, "Output");
+      this.findSpawnRelatedFields(info, "Info");
+      this.logger.info("=== BOT GENERATION ANALYSIS COMPLETED ===");
+    } catch (error) {
+      this.logger.error(`Error analyzing bot generation data: ${error}`);
+    }
+  }
+  // RESEARCH: Analyze raid start data structure to understand what we can control
+  analyzeRaidStartData(outputJSON, info) {
+    try {
+      this.logger.info("=== RAID START DATA ANALYSIS ===");
+      this.logger.info("Info parameter analysis:");
+      this.logger.info(`- Location: ${info.location || "undefined"}`);
+      this.logger.info(`- Info keys: ${Object.keys(info).join(", ")}`);
+      this.logger.info("Output structure analysis:");
+      this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(", ")}`);
+      this.logger.info("Looking for spawn-related fields...");
+      this.findSpawnRelatedFields(outputJSON, "Output");
+      this.findSpawnRelatedFields(info, "Info");
+      this.logger.info("=== RAID START ANALYSIS COMPLETED ===");
+    } catch (error) {
+      this.logger.error(`Error analyzing raid start data: ${error}`);
+    }
+  }
+  // RESEARCH: Analyze game start data structure to understand what we can control
+  analyzeGameStartData(outputJSON, info) {
+    try {
+      this.logger.info("=== GAME START DATA ANALYSIS ===");
+      this.logger.info("Info parameter analysis:");
+      this.logger.info(`- Info keys: ${Object.keys(info).join(", ")}`);
+      this.logger.info("Output structure analysis:");
+      this.logger.info(`- Output keys: ${Object.keys(outputJSON).join(", ")}`);
+      this.logger.info("Looking for spawn-related fields...");
+      this.findSpawnRelatedFields(outputJSON, "Output");
+      this.findSpawnRelatedFields(info, "Info");
+      this.logger.info("=== GAME START ANALYSIS COMPLETED ===");
+    } catch (error) {
+      this.logger.error(`Error analyzing game start data: ${error}`);
+    }
+  }
+  // RESEARCH: Find fields that might be related to spawning
+  findSpawnRelatedFields(data, context) {
+    try {
+      const spawnKeywords = [
+        "spawn",
+        "bot",
+        "location",
+        "position",
+        "count",
+        "limit",
+        "max",
+        "min",
+        "wave",
+        "time",
+        "delay",
+        "zone",
+        "area",
+        "exclude",
+        "include",
+        "type",
+        "role",
+        "difficulty",
+        "gear",
+        "equipment",
+        "inventory"
+      ];
+      this.logger.info(`Searching for spawn-related fields in ${context}:`);
+      const foundFields = [];
+      this.searchForKeywords(data, spawnKeywords, foundFields, "");
+      if (foundFields.length > 0) {
+        this.logger.info(`Found spawn-related fields: ${foundFields.join(", ")}`);
+      } else {
+        this.logger.info("No obvious spawn-related fields found");
+      }
+    } catch (error) {
+      this.logger.error(`Error searching for spawn-related fields: ${error}`);
+    }
+  }
+  // RESEARCH: Recursively search for keywords in nested objects
+  searchForKeywords(data, keywords, foundFields, path) {
+    try {
+      if (typeof data === "object" && data !== null) {
+        for (const [key, value] of Object.entries(data)) {
+          const currentPath = path ? `${path}.${key}` : key;
+          const lowerKey = key.toLowerCase();
+          for (const keyword of keywords) {
+            if (lowerKey.includes(keyword)) {
+              foundFields.push(currentPath);
+              this.logger.info(`Found spawn-related field: ${currentPath} = ${JSON.stringify(value)}`);
+              break;
+            }
+          }
+          if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+            this.searchForKeywords(value, keywords, foundFields, currentPath);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(`Error in keyword search: ${error}`);
+    }
+  }
+  // SAFETY: Validate that our modifications don't break SPT's data structure
+  validateModifiedData(originalData, modifiedData, context) {
+    try {
+      if (typeof originalData !== typeof modifiedData) {
+        this.logger.error(`${context}: Data type mismatch - original: ${typeof originalData}, modified: ${typeof modifiedData}`);
+        return false;
+      }
+      if (Array.isArray(originalData.data) && Array.isArray(modifiedData.data)) {
+        if (modifiedData.data.length > originalData.data.length) {
+          this.logger.warn(`${context}: Modified data has more bots than original - this might cause issues`);
+        }
+      }
+      const requiredFields = ["data", "err", "errmsg"];
+      for (const field of requiredFields) {
+        if (originalData.hasOwnProperty(field) && !modifiedData.hasOwnProperty(field)) {
+          this.logger.error(`${context}: Required field '${field}' missing from modified data`);
+          return false;
+        }
+      }
+      this.logger.info(`${context}: Data validation passed`);
+      return true;
+    } catch (error) {
+      this.logger.error(`${context}: Data validation failed: ${error}`);
+      return false;
+    }
+  }
+  // SAFETY: Add performance monitoring to our spawn rule methods
+  measurePerformance(operation, func) {
+    const startTime = Date.now();
+    try {
+      const result = func();
+      const endTime = Date.now();
+      this.logger.info(`${operation} completed in ${endTime - startTime}ms`);
+      return result;
+    } catch (error) {
+      const endTime = Date.now();
+      this.logger.error(`${operation} failed after ${endTime - startTime}ms: ${error}`);
+      throw error;
     }
   }
   // Get spawn statistics for monitoring
