@@ -1,131 +1,38 @@
 import { DatabaseServer, Logger } from "./types/spt-types";
 import { ConfigManager } from "./ConfigManager";
-import {
-    BotHelper,
-    BotEquipmentModService,
-    BotModificationService,
-    BotSpawnService,
-    BotGenerationCacheService,
-    RandomUtil,
-    TimeUtil,
-    ItemHelper,
-    IBotType,
-    IBotBase,
-    BotDifficulty,
-    BotType
-} from "./types/spt-types";
 
 export class SpawnManager {
     private databaseServer: DatabaseServer;
-    private botHelper: BotHelper | null;
-    private botEquipmentModService: BotEquipmentModService | null;
-    private botModificationService: BotModificationService | null;
-    private botSpawnService: BotSpawnService | null;
-    private botGenerationCacheService: BotGenerationCacheService | null;
-    private randomUtil: RandomUtil | null;
-    private timeUtil: TimeUtil | null;
-    private itemHelper: ItemHelper | null;
-    private logger: Logger;
     private configManager: ConfigManager;
-    private sainAvailable: boolean = false;
+    private logger: Logger;
 
     constructor(
         databaseServer: DatabaseServer,
-        botHelper: BotHelper | null,
-        botEquipmentModService: BotEquipmentModService | null,
-        botModificationService: BotModificationService | null,
-        botSpawnService: BotSpawnService | null,
-        botGenerationCacheService: BotGenerationCacheService | null,
-        randomUtil: RandomUtil | null,
-        timeUtil: TimeUtil | null,
-        itemHelper: ItemHelper | null,
+        configManager: ConfigManager,
         logger: Logger
     ) {
         this.databaseServer = databaseServer;
-        this.botHelper = botHelper;
-        this.botEquipmentModService = botEquipmentModService;
-        this.botModificationService = botModificationService;
-        this.botSpawnService = botSpawnService;
-        this.botGenerationCacheService = botGenerationCacheService;
-        this.randomUtil = randomUtil;
-        this.timeUtil = timeUtil;
-        this.itemHelper = itemHelper;
+        this.configManager = configManager;
         this.logger = logger;
-        this.configManager = new ConfigManager();
     }
 
     public initialize(): void {
         try {
-            this.logger.info("[LiveTarkovAI] Initializing SpawnManager...");
-            
-            // Check if SAIN is available for enhanced behavior
-            this.checkSAINAvailability();
+            this.logger.info("Initializing SpawnManager...");
             
             // Apply custom spawn configurations
             this.applyCustomSpawnConfig();
             
-            this.logger.info("[LiveTarkovAI] SpawnManager initialized successfully");
+            this.logger.info("SpawnManager initialized successfully");
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error initializing SpawnManager: ${error}`);
-        }
-    }
-
-    private checkSAINAvailability(): void {
-        try {
-            // Use the same robust SAIN detection as the main mod
-            const sainDetected = this.detectSAINMod();
-            
-            if (sainDetected) {
-                this.sainAvailable = true;
-                this.logger.info("[LiveTarkovAI] SAIN integration available - enhanced bot behavior enabled");
-            } else {
-                this.sainAvailable = false;
-                this.logger.info("[LiveTarkovAI] SAIN not available - using standard bot behavior");
-            }
-        } catch (error) {
-            this.sainAvailable = false;
-            this.logger.info("[LiveTarkovAI] SAIN not available - using standard bot behavior");
-        }
-    }
-
-    // Detect SAIN mod using multiple methods
-    private detectSAINMod(): boolean {
-        try {
-            // Method 1: Try to require SAIN directly
-            try {
-                require("zSolarint-SAIN-ServerMod");
-                return true;
-            } catch (error) {
-                // Continue to next method
-            }
-
-            // Method 2: Check for SAIN in global scope
-            if (globalThis.SAIN || globalThis.SainService || globalThis.sain) {
-                return true;
-            }
-
-            // Method 3: Check for SAIN in SPT container if available
-            try {
-                if (globalThis.SPT_CONTAINER) {
-                    const container = globalThis.SPT_CONTAINER;
-                    if (container.resolve && container.resolve("SAINService")) {
-                        return true;
-                    }
-                }
-            } catch (error) {
-                // Continue to next method
-            }
-
-            return false;
-        } catch (error) {
-            return false;
+            this.logger.error(`Error initializing SpawnManager: ${error}`);
         }
     }
 
     // Apply custom spawn configurations to the database
     public applyCustomSpawnConfig(): void {
         try {
-            this.logger.info("[LiveTarkovAI] Applying custom spawn configurations...");
+            this.logger.info("Applying custom spawn configurations...");
             
             // Modify bot types in the database
             this.modifyBotTypes();
@@ -135,9 +42,9 @@ export class SpawnManager {
                 this.applyGearProgression();
             }
             
-            this.logger.info("[LiveTarkovAI] Custom spawn configurations applied successfully");
+            this.logger.info("Custom spawn configurations applied successfully");
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying custom spawn config: ${error}`);
+            this.logger.error(`Error applying custom spawn config: ${error}`);
         }
     }
 
@@ -156,7 +63,7 @@ export class SpawnManager {
 
                 const dbBotType = database.bots.types[botType];
                 if (!dbBotType) {
-                    this.logger.warn(`[LiveTarkovAI] Bot type ${botType} not found in database`);
+                    this.logger.warn(`Bot type ${botType} not found in database`);
                     continue;
                 }
 
@@ -175,174 +82,107 @@ export class SpawnManager {
 
             // Show summary instead of individual logs
             if (modifiedCount > 0) {
-                this.logger.info(`[LiveTarkovAI] Modified ${modifiedCount} bot types: ${modifiedTypes.join(', ')}`);
+                this.logger.info(`Modified ${modifiedCount} bot types: ${modifiedTypes.join(', ')}`);
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error modifying bot types: ${error}`);
+            this.logger.error(`Error modifying bot types: ${error}`);
         }
     }
 
     // Apply gear tier restrictions to bot types
-    private applyGearTierRestrictions(dbBotType: IBotType, botConfig: any): void {
+    private applyGearTierRestrictions(dbBotType: any, botConfig: any): void {
         try {
             if (!botConfig.gearRestrictions) return;
+
+            const restrictions = botConfig.gearRestrictions;
             
-            // Apply weapon tier restrictions
-            if (botConfig.gearRestrictions.weapons && botConfig.gearRestrictions.weapons.length > 0) {
-                // Store weapon restrictions for later use during bot generation
-                if (!dbBotType.weaponRestrictions) {
-                    dbBotType.weaponRestrictions = [];
-                }
-                dbBotType.weaponRestrictions.push(...botConfig.gearRestrictions.weapons);
+            // Apply weapon restrictions
+            if (restrictions.weapons) {
+                dbBotType.inventory = dbBotType.inventory || {};
+                dbBotType.inventory.equipment = dbBotType.inventory.equipment || {};
+                dbBotType.inventory.equipment.weapon = restrictions.weapons;
             }
-            
-            // Apply armor tier restrictions  
-            if (botConfig.gearRestrictions.armor && botConfig.gearRestrictions.armor.length > 0) {
-                if (!dbBotType.armorRestrictions) {
-                    dbBotType.armorRestrictions = [];
-                }
-                dbBotType.armorRestrictions.push(...botConfig.gearRestrictions.armor);
+
+            // Apply armor restrictions
+            if (restrictions.armor) {
+                dbBotType.inventory = dbBotType.inventory || {};
+                dbBotType.inventory.equipment = dbBotType.inventory.equipment || {};
+                dbBotType.inventory.equipment.armor = restrictions.armor;
             }
-            
+
             // Apply item restrictions
-            if (botConfig.gearRestrictions.items && botConfig.gearRestrictions.items.length > 0) {
-                if (!dbBotType.itemRestrictions) {
-                    dbBotType.itemRestrictions = [];
-                }
-                dbBotType.itemRestrictions.push(...botConfig.gearRestrictions.items);
-            }
-            
-            // Apply level-based gear scaling
-            if (botConfig.levelProgression && botConfig.levelProgression.gearScaling) {
-                dbBotType.levelBasedGear = true;
-                dbBotType.minLevel = botConfig.levelProgression.minLevel || 1;
-                dbBotType.maxLevel = botConfig.levelProgression.maxLevel || 60;
+            if (restrictions.items) {
+                dbBotType.inventory = dbBotType.inventory || {};
+                dbBotType.inventory.items = restrictions.items;
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying gear restrictions: ${error}`);
+            this.logger.error(`Error applying gear restrictions: ${error}`);
         }
     }
 
     // Apply difficulty settings to bot types
-    private applyDifficultySettings(dbBotType: IBotType, botConfig: any): void {
+    private applyDifficultySettings(dbBotType: any, botConfig: any): void {
         try {
             if (!botConfig.difficulty) return;
+
+            const difficulty = botConfig.difficulty;
             
-            // Convert string difficulty to BotDifficulty enum
-            let difficulty: BotDifficulty;
-            switch (botConfig.difficulty) {
-                case "easy":
-                    difficulty = BotDifficulty.EASY;
-                    break;
-                case "normal":
-                    difficulty = BotDifficulty.NORMAL;
-                    break;
-                case "hard":
-                    difficulty = BotDifficulty.HARD;
-                    break;
-                case "impossible":
-                    difficulty = BotDifficulty.IMPOSSIBLE;
-                    break;
-                default:
-                    difficulty = BotDifficulty.NORMAL;
-            }
+            // Set bot difficulty
+            dbBotType.difficulty = difficulty;
             
-            // Apply difficulty to bot type
-            dbBotType.Difficulty = difficulty;
-            
-            // Apply difficulty-based behavior modifications
+            // Apply difficulty-based behavior
             this.applyDifficultyBasedBehavior(dbBotType, difficulty);
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying difficulty settings: ${error}`);
+            this.logger.error(`Error applying difficulty settings: ${error}`);
         }
     }
 
     // Apply difficulty-based behavior modifications
-    private applyDifficultyBasedBehavior(dbBotType: IBotType, difficulty: BotDifficulty): void {
+    private applyDifficultyBasedBehavior(dbBotType: any, difficulty: string): void {
         try {
+            // Modify bot behavior based on difficulty
             switch (difficulty) {
-                case BotDifficulty.EASY:
-                    // Reduce accuracy, reaction time, etc.
-                    if (!dbBotType.behaviorModifiers) {
-                        dbBotType.behaviorModifiers = {};
-                    }
-                    dbBotType.behaviorModifiers.accuracy = 0.3;
-                    dbBotType.behaviorModifiers.reactionTime = 2.0;
-                    dbBotType.behaviorModifiers.aggression = 0.4;
+                case "easy":
+                    dbBotType.skills = dbBotType.skills || {};
+                    dbBotType.skills.aiming = Math.max(0.1, (dbBotType.skills.aiming || 0.5) * 0.7);
+                    dbBotType.skills.recoil = Math.max(0.1, (dbBotType.skills.recoil || 0.5) * 0.7);
                     break;
-                    
-                case BotDifficulty.NORMAL:
-                    // Default settings
-                    if (!dbBotType.behaviorModifiers) {
-                        dbBotType.behaviorModifiers = {};
-                    }
-                    dbBotType.behaviorModifiers.accuracy = 0.6;
-                    dbBotType.behaviorModifiers.reactionTime = 1.2;
-                    dbBotType.behaviorModifiers.aggression = 0.7;
+                case "normal":
+                    // Keep default values
                     break;
-                    
-                case BotDifficulty.HARD:
-                    // Increase accuracy, reaction time, etc.
-                    if (!dbBotType.behaviorModifiers) {
-                        dbBotType.behaviorModifiers = {};
-                    }
-                    dbBotType.behaviorModifiers.accuracy = 0.8;
-                    dbBotType.behaviorModifiers.reactionTime = 0.8;
-                    dbBotType.behaviorModifiers.aggression = 0.9;
+                case "hard":
+                    dbBotType.skills = dbBotType.skills || {};
+                    dbBotType.skills.aiming = Math.min(1.0, (dbBotType.skills.aiming || 0.5) * 1.3);
+                    dbBotType.skills.recoil = Math.min(1.0, (dbBotType.skills.recoil || 0.5) * 1.3);
                     break;
-                    
-                case BotDifficulty.IMPOSSIBLE:
-                    // Maximum difficulty settings
-                    if (!dbBotType.behaviorModifiers) {
-                        dbBotType.behaviorModifiers = {};
-                    }
-                    dbBotType.behaviorModifiers.accuracy = 0.95;
-                    dbBotType.behaviorModifiers.reactionTime = 0.3;
-                    dbBotType.behaviorModifiers.aggression = 1.0;
+                case "impossible":
+                    dbBotType.skills = dbBotType.skills || {};
+                    dbBotType.skills.aiming = Math.min(1.0, (dbBotType.skills.aiming || 0.5) * 1.5);
+                    dbBotType.skills.recoil = Math.min(1.0, (dbBotType.skills.recoil || 0.5) * 1.5);
                     break;
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying difficulty-based behavior: ${error}`);
+            this.logger.error(`Error applying difficulty-based behavior: ${error}`);
         }
     }
 
     // Apply live Tarkov behavior settings
-    private applyBotBehaviorSettings(dbBotType: IBotType, botConfig: any): void {
+    private applyBotBehaviorSettings(dbBotType: any, botConfig: any): void {
         try {
+            if (!botConfig.liveTarkovBehavior) return;
+
             const behavior = botConfig.liveTarkovBehavior;
-            if (!behavior) return;
             
-            // Apply live Tarkov behavior settings to bot type
-            if (!dbBotType.liveTarkovBehavior) {
-                dbBotType.liveTarkovBehavior = {};
+            // Apply behavior modifications
+            if (behavior.aggressive) {
+                dbBotType.aggression = Math.min(1.0, (dbBotType.aggression || 0.5) * 1.2);
             }
             
-            // Apply accuracy
-            if (behavior.accuracy !== undefined) {
-                dbBotType.liveTarkovBehavior.accuracy = behavior.accuracy;
-            }
-            
-            // Apply reaction time
-            if (behavior.reactionTime !== undefined) {
-                dbBotType.liveTarkovBehavior.reactionTime = behavior.reactionTime;
-            }
-            
-            // Apply aggression
-            if (behavior.aggression !== undefined) {
-                dbBotType.liveTarkovBehavior.aggression = behavior.aggression;
-            }
-            
-            // Apply hearing
-            if (behavior.hearing !== undefined) {
-                dbBotType.liveTarkovBehavior.hearing = behavior.hearing;
-            }
-            
-            // Apply vision
-            if (behavior.vision !== undefined) {
-                dbBotType.liveTarkovBehavior.vision = behavior.vision;
+            if (behavior.cautious) {
+                dbBotType.aggression = Math.max(0.1, (dbBotType.aggression || 0.5) * 0.8);
             }
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error applying bot behavior settings: ${error}`);
+            this.logger.error(`Error applying bot behavior settings: ${error}`);
         }
     }
 
@@ -410,106 +250,18 @@ export class SpawnManager {
         }
     }
 
-    // Hook into SPT spawn service
-    public hookIntoSpawnService(spawnService: any): void {
-        try {
-            if (!spawnService || typeof spawnService !== "object") return;
-            
-            // Store reference to spawn service
-            this.botSpawnService = spawnService;
-            
-            // Hook into spawn methods if they exist
-            if (spawnService.spawnBot && typeof spawnService.spawnBot === "function") {
-                const originalSpawnBot = spawnService.spawnBot;
-                spawnService.spawnBot = async (botType: string, location: string, count: number) => {
-                    // Apply our custom spawn logic before spawning
-                    const modifiedCount = this.calculateCustomBotCount(botType, location, count);
-                    const modifiedBotType = this.getModifiedBotType(botType);
-                    
-                    // Call original spawn method with our modifications
-                    return await originalSpawnBot.call(spawnService, modifiedBotType, location, modifiedCount);
-                };
-            }
-            
-            this.logger.info("[LiveTarkovAI] Successfully hooked into spawn service");
-        } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error hooking into spawn service: ${error}`);
-        }
-    }
-
-    // Calculate custom bot count based on configuration
-    private calculateCustomBotCount(botType: string, location: string, originalCount: number): number {
-        try {
-            const config = this.configManager.getConfig();
-            const mapConfig = config.mapSettings[location];
-            
-            if (!mapConfig || !mapConfig.enabled) return originalCount;
-            
-            const botTypeConfig = mapConfig.botTypes[botType];
-            if (!botTypeConfig || !botTypeConfig.enabled) return 0;
-            
-            // Use configured max count or original count
-            return Math.min(botTypeConfig.maxCount, originalCount);
-        } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error calculating custom bot count: ${error}`);
-            return originalCount;
-        }
-    }
-
-    // Get modified bot type based on configuration
-    private getModifiedBotType(originalBotType: string): string {
-        try {
-            // For now, return original bot type
-            // This can be enhanced to modify bot types based on configuration
-            return originalBotType;
-        } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error getting modified bot type: ${error}`);
-            return originalBotType;
-        }
-    }
-
-    // Get spawn statistics
+    // Get spawn statistics for monitoring
     public getSpawnStatistics(): any {
         try {
-            const config = this.configManager.getConfig();
             const stats = {
                 totalBots: 0,
-                botTypes: {},
-                maps: {},
-                dependencies: {
-                    waypoints: true, // Always true since it's required
-                    bigBrain: true,  // Always true since it's required
-                    sain: this.sainAvailable,
-                    fika: false // Would need to check this separately
-                }
+                modifiedBots: 0,
+                gearProgressionEnabled: this.configManager.isGearProgressionEnabled()
             };
-
-            // Calculate statistics based on configuration
-            for (const [mapName, mapConfig] of Object.entries(config.mapSettings || {})) {
-                if (mapConfig && mapConfig.enabled) {
-                    stats.maps[mapName] = {
-                        totalBots: mapConfig.maxBots || 0,
-                        botTypes: mapConfig.botTypes || {},
-                        liveTarkovSettings: mapConfig.liveTarkovSettings || {}
-                    };
-                    stats.totalBots += mapConfig.maxBots || 0;
-                }
-            }
-
-            for (const [botType, botConfig] of Object.entries(config.botTypeSettings || {})) {
-                if (botConfig && botConfig.enabled) {
-                    stats.botTypes[botType] = {
-                        gearTier: botConfig.gearTier,
-                        difficulty: botConfig.difficulty,
-                        spawnChance: botConfig.spawnChance,
-                        liveTarkovBehavior: botConfig.liveTarkovBehavior || {}
-                    };
-                }
-            }
-
+            
             return stats;
         } catch (error) {
-            this.logger.error(`[LiveTarkovAI] Error getting spawn statistics: ${error}`);
+            this.logger.error(`Error getting spawn statistics: ${error}`);
             return {};
         }
     }
