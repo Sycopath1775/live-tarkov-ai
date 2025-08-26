@@ -15,11 +15,7 @@ async function buildMod() {
         await build({
             entryPoints: [
                 join(__dirname, "src/ConfigManager.ts"),
-                join(__dirname, "src/SpawnManager.ts"),
-                join(__dirname, "src/HotZoneManager.ts"),
-                join(__dirname, "src/FikaIntegrationService.ts"),
-                join(__dirname, "src/BushShootingService.ts"),
-                join(__dirname, "src/SainIntegrationService.ts")
+                join(__dirname, "src/SpawnManager.ts")
             ],
             bundle: false,
             outdir: join(__dirname, "src"),
